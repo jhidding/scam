@@ -43,7 +43,7 @@
     clip-by-plane
     
     ; camera
-    camera-transform parallel-projection
+    camera-transform parallel-projection weak-perspective-projection
     
     ; colour
     make-colour colour-rgb-gradient colour-hsv-gradient)
