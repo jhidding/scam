@@ -86,12 +86,6 @@
 	;  list->lazy ($ map list->lazy)))
 
   #|====================================================================
-   | group-2, lists all consecutive pairs in a list
-   +------------------------------------------------------------------|#
-  (define group-2 
-    ($ unfoldr (comp null? cdr) (juxt car cadr) cdr))
-
-  #|====================================================================
    | quad-mesh, creates a mesh of quads from a lattice
    +------------------------------------------------------------------|#
   (define quad-mesh 
@@ -122,29 +116,45 @@
    | [group-2] creates quads from this 2d list structure.
    | [append-reverse] takes care that we go round the quad, not zig-zag.
    +------------------------------------------------------------------|#
+  (define double-map
+    (lambda (f X)
+      (map ($ map f) X)))
+
   (define parametric-closed-quad-mesh
-    (comp ($ map points->polygon)
-	  append <- quad-mesh wrap-lattice cross-map))
+    (comp 
+      ;($ map points->polygon)
+      	  ($ map make-polygon)
+	  append <- quad-mesh wrap-lattice 
+	  ($ double-map point->vertex) cross-map))
 
   #|====================================================================
    | parametric-closed-triangle-mesh, creates a closed surface of
    | triangles given a function 
    +------------------------------------------------------------------|#
   (define parametric-closed-triangle-mesh
-    (comp ($ map points->polygon)
-	  triangle-mesh quad-mesh wrap-lattice cross-map))
+    (comp 
+      ;($ map points->polygon)
+      	  ($ map make-polygon)
+	  triangle-mesh quad-mesh wrap-lattice 
+	  ($ double-map point->vertex) cross-map))
 
   #|====================================================================
    | parametric-open-quad-mesh, doesn't wrap the mesh
    +------------------------------------------------------------------|#
   (define parametric-open-quad-mesh
-    (comp ($ map points->polygon)
-	  append <- quad-mesh cross-map))
+    (comp 
+      ;($ map points->polygon)
+      	  ($ map make-polygon)
+	  append <- quad-mesh 
+	  ($ double-map point->vertex) cross-map))
 
   #|====================================================================
    | parametric-open-triangle-mesh, doesn't wrap the mesh
    +------------------------------------------------------------------|#
   (define parametric-open-triangle-mesh
-    (comp ($ map points->polygon)
-	  triangle-mesh quad-mesh cross-map))
+    (comp 
+      ;($ map points->polygon)
+      	  ($ map make-polygon)
+	  triangle-mesh quad-mesh 
+	  ($ double-map point->vertex) cross-map))
 )

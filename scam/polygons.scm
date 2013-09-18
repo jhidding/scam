@@ -6,7 +6,7 @@
 	  polygon-add-material polygon-material polygon-plane
 	  make-polygon polygon? polygon-points polygon-vertices polygon-info
 	  make-locus locus->point locus-material locus-add-material locus?
-	  polygon-normal)
+	  polygon-normal polygons-boundary)
 
   (import (rnrs (6))
 	  (rnrs hashtables (6))
@@ -68,8 +68,14 @@
   (define n-cell-vertices (lambda (c) (n-cell-v c)))
   (define n-cell-info     (lambda (c) (n-cell-i c)))
 
+  (define my-hash 
+    (lambda (X)
+      (cond ((null? X) 0)
+	    (else (+ (* 1024 (my-hash (cdr X))) (car X))))))
+		   
   (define n-cell-hash
-    (comp equal-hash ($ map vertex-hash) n-cell-vertices))
+    (comp my-hash ($ list-sort <) 
+	  ($ map vertex-hash) n-cell-vertices))
 
   ;;;======================================================
   ;;; locus (0-cell)
@@ -112,7 +118,7 @@
 	 p))
 
       ((vertices info) (let ((p (make-n-cell 1 vertices)))
-	 (n-cell-i-set! p info)
+	 (n-cell-i-set! p (renew-hash info (n-cell-hash p)))
 	 p))))
 
   (define segment?
@@ -130,7 +136,7 @@
 		    (cons (cons 'material m) (segment-info p)))))
 
   (define segment-hash
-    (comp ($ assq 'hash) n-cell-info))
+    (comp cdr ($ assq 'hash) n-cell-info))
 
   (define segment-vertices n-cell-vertices)
 
@@ -143,6 +149,11 @@
 	(vertices-equal? (segment-vertices p1) (segment-vertices p2))
 	#f)))
 
+  (define renew-hash
+    (lambda (info H)
+      (let ((wo-hash (remp (comp ($ eq? 'hash) car) info)))
+	(cons (cons 'hash H) wo-hash))))
+
   ;;;======================================================
   ;;; polygon (2-cell)
   ;;;------------------------------------------------------
@@ -154,7 +165,7 @@
 	 p))
 
       ((vertices info) (let ((p (make-n-cell 2 vertices)))
-	 (n-cell-i-set! p info)
+	 (n-cell-i-set! p (renew-hash info (n-cell-hash p)))
 	 p))))
 
   (define polygon?
@@ -177,6 +188,14 @@
   (define polygon-points
     (comp ($ map vertex->point) n-cell-vertices))
 
+  (define add-last
+    (lambda (lst)
+      (let ((rev (reverse lst)))
+	(cons (car rev) lst))))
+
+  (define polygon-segments
+    (comp ($ map make-segment) group-2 add-last polygon-vertices))
+
   (define polygon-add-material
     (lambda (p m)
       (make-polygon (polygon-vertices p)
@@ -190,4 +209,9 @@
       (if (= (polygon-hash p1) (polygon-hash p2))
 	(vertices-equal? (polygon-vertices p1) (polygon-vertices p2))
 	#f)))
+
+  (define polygons-boundary
+    (comp ($ remove-doubles (on = segment-hash))
+	  ($ list-sort (on < segment-hash)) 
+	  ($ flat-map polygon-segments)))
 )

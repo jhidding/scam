@@ -26,8 +26,8 @@
     :. :> a-dot
     
     ; polygons
-    make-plane
-    make-polygon polygon-add-material
+    make-plane segment-add-material
+    make-polygon polygon-add-material polygons-boundary
     
     ; parametric
     parametric-closed-quad-mesh parametric-open-quad-mesh
@@ -36,7 +36,7 @@
     ; render
     make-pdf-renderer make-svg-renderer
     make-material-fill make-material-linefill make-material-line
-    make-material-fill-fn make-material-linefill-fn
+    make-material-fill-fn make-material-linefill-fn make-material-line-fn
     render-scale render-translate render-scene render-finish
     
     ; geometry

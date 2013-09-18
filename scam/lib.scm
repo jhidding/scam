@@ -8,11 +8,12 @@
 
   (export
     ; list manipulation routines
-    append-reverse list->vector* list-permute take
+    append-reverse list->vector* list-permute take 
+    group-2 remove-doubles
     
     ; functional tools
     comp juxt first second third flip reverse-args
-    partial partial* id <- $ args thunk
+    partial partial* id <- $ args thunk on
 
     ; mapping, folding, unfolding
     reduce					; reducing
@@ -57,6 +58,30 @@
     (lambda (lst p)
       (unfoldr null? (comp ($ list-ref lst) car) 
 	       cdr p)))
+
+  #|====================================================================
+   | group-2, lists all consecutive pairs in a list
+   +------------------------------------------------------------------|#
+  (define group-2 
+    ($ unfoldr (comp null? cdr) (juxt car cadr) cdr))
+
+  #|====================================================================
+   | remove-doubles, removes consecutive doubles from a list. You may
+   | want to sort the list before doing this
+   +------------------------------------------------------------------|#
+  (define remove-doubles
+    (lambda (pred lst*)
+      (let loop ((lst lst*)
+		 (r   '()))
+        (cond
+	  ((< (length lst) 2) 
+	   (reverse (append-reverse lst r)))  
+
+	  ((pred (car lst) (cadr lst))
+	   (loop (cddr lst) r))
+
+	  (else
+	   (loop (cdr lst) (cons (car lst) r)))))))
   ; }}}1
 
   ; functional {{{1
@@ -162,6 +187,11 @@
       (let ((rev (reverse X)))
         (lambda (Y)
   	(apply f (append-reverse rev Y))))))
+
+  (define on
+    (lambda (f g)
+      (lambda X
+	(apply f (map g X)))))
   ; }}}1
 
   ; mapping, folding and unfolding {{{1
