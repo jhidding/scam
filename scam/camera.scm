@@ -87,6 +87,6 @@
   (define weak-perspective-projection
     (lambda (z0)
       (comp (lambda (x y z) (values (* (/ z0 z) x) (* (/ z0 z) y) z))
-	    <- a-vector->list))))
+	    <- a-vector->list)))
 )
 
