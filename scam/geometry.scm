@@ -56,6 +56,13 @@
 
 	(a-translate (a-scale t v) p))))
 
+  (define intersection-plane-segment!
+    (lambda (cache A s)
+      (let* ((I (hashtable-ref cache s #f))
+	     (v (if I I (make-vertex (apply intersection A (segment-points s))))))
+	(if (not I) (hashtable-set! cache s v))
+	v)))
+
   #|====================================================================
    | cut-polygon,
    | Cuts polygon [p] by plane [A]. First we append the last point of
@@ -69,9 +76,10 @@
    | continue. This results in two new polygons passed by values.
    +------------------------------------------------------------------|#
   (define cut-polygon
-    (lambda (A p)
+    (lambda (cache A p)
       (let ((pts  (polygon-vertices p))
 	    (info (polygon-info p)))
+	    ;(cache (make-hashtable segment-hash segment-equal?)))
 
 	(if (null? pts) (make-polygon pts info)
 	  (let loop ((rest (cons (car pts) (reverse pts)))
@@ -94,9 +102,8 @@
 	      ; otherwise, we have penetrated the plane and need to cut,
 	      ; notice that we swap [q1] and [q2] here
 	      (else
-	       (let ((new-vertex (make-vertex (intersection A 
-				   (vertex->point (car rest)) 
-				   (vertex->point (cadr rest))))))
+	       (let ((new-vertex (intersection-plane-segment! 
+				   cache A (make-segment (take 2 rest)))))
 		 (loop rest (cons new-vertex q2) (cons new-vertex q1) (not below?))))))))))
 
   #|====================================================================
@@ -107,13 +114,14 @@
    | plane pass.
    +------------------------------------------------------------------|#
   (define (clip-by-plane A lst)
-    (let* ((replacer (lambda (p)
+    (let* ((cache (make-hashtable segment-hash segment-equal?))
+	   (replacer (lambda (p)
 		       (let ((orf (polygon-o-plane 1e-4 A p)))
 			 (cond
 			   ((eq? orf 'below) p)
 			   ((eq? orf 'above) #f)
 			   ((eq? orf 'contains) p)
-			   ((and (polygon? p) (eq? orf 'intersect)) (cut-polygon A p))
+			   ((and (polygon? p) (eq? orf 'intersect)) (cut-polygon cache A p))
 			   (else #f))))))
       (filter id (map replacer lst))))
 )

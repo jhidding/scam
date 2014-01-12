@@ -42,7 +42,7 @@
 
        (M3  (make-material-line-fn
 	      (lambda (z normal set-colour set-line-width stroke)
-		(set-colour (make-colour 'rgb 1.0 0 1.0))
+		(set-colour (make-colour 'rgb 0.0 0 0.0))
 		(set-line-width 0.01) (stroke))))
 
        (P (map ($ polygon-add-material -- M1) T))
