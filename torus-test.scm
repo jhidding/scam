@@ -24,11 +24,11 @@
        (M1 (make-material-linefill-fn
 	     (lambda (z normal set-colour set-lw fill stroke)
 	       (let* ((c (colour-rgb-gradient (make-colour 'rgba 0.4 0 0 1.0)
-				     	      (make-colour 'rgba 0.6 0.5 0 1.0)))
+				     	      (make-colour 'rgba 0.6 0.5 0 0.7)))
 		      (r (abs (a-dot normal (:> 0 0 1))))
 		      (black (make-colour 'rgb 0 0 0)))
 		 (set-colour (c r)) (fill) (set-lw (inexact (/ 0.005 z)))
-		 ;(set-colour black) 
+		 (set-colour black) 
 		 (stroke)
 		 ))))
 
@@ -43,7 +43,9 @@
        (M3  (make-material-line-fn
 	      (lambda (z normal set-colour set-line-width stroke)
 		(set-colour (make-colour 'rgb 0.0 0 0.0))
-		(set-line-width 0.01) (stroke))))
+		(set-line-width 0.012) (stroke)
+		(set-colour (make-colour 'rgb 1.0 1.0 1.0))
+		(set-line-width 0.004) (stroke))))
 
        (P (map ($ polygon-add-material -- M1) T))
 
@@ -55,11 +57,11 @@
 
        (cuts (map ($ segment-add-material -- M3) (polygons-boundary Q)))
 
-       (C (camera-transform (:.  1.8 0.3 1.5)  	 ; position
+       (C (camera-transform (:.  3.6 0.6 2.5)  	 ; position
 			    (:.  0 0 0) 	 ; target
 			    (:>  0 1 1)  	 ; shub
-			    parallel-projection))
-			    ;(weak-perspective-projection 1.4)))
+			    ;parallel-projection))
+			    (weak-perspective-projection 4.0)))
 
        (R (make-pdf-renderer C 800 600 "torus.pdf")))
 
