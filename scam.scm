@@ -23,7 +23,7 @@
     lazy head tail list->lazy lazy->list lazy-map
     
     ; vectors
-    :. :> a-dot
+    :. :> a-dot a-add a-translate a-scale
     
     ; polygons
     make-plane segment-add-material
@@ -37,7 +37,8 @@
     make-pdf-renderer make-svg-renderer
     make-material-fill make-material-linefill make-material-line
     make-material-fill-fn make-material-linefill-fn make-material-line-fn
-    render-scale render-translate render-scene render-finish
+    render-scale render-translate render-scene render-finish render-do
+    render-save-png
     
     ; geometry
     clip-by-plane

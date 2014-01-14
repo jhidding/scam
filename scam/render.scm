@@ -4,7 +4,8 @@
 	  make-material-fill make-material-line make-material-linefill
 	  make-material-fill-fn make-material-linefill-fn
 	  make-material-line-fn
-	  render-scene render-finish render-translate render-scale)
+	  render-save-png
+	  render-do render-scene render-finish render-translate render-scale)
 
   (import (rnrs (6))
 	  (cairo)
@@ -18,24 +19,28 @@
   ;;; types and functions to facilitate interface to rendering in cairo
   ;;; ------------------------------------------------------------------
   (define-record-type renderer
-    (fields camera context finish))
+    (fields camera surface context finish))
 
   (define make-pdf-renderer
     (lambda (camera width height filename)
       (let* ((surface (cairo-pdf-surface-create width height filename))
 	     (context (cairo-create surface))
 	     (finish  (lambda () (cairo-surface-finish surface))))
-      (make-renderer camera context finish))))
+      (make-renderer camera surface context finish))))
 
   (define make-svg-renderer
     (lambda (camera width height filename)
       (let* ((surface (cairo-svg-surface-create width height filename))
 	     (context (cairo-create surface))
 	     (finish  (lambda () (cairo-surface-finish surface))))
-      (make-renderer camera context finish))))
+      (make-renderer camera surface context finish))))
 
   (define render-finish
     (lambda (R) ((renderer-finish R))))
+
+  (define render-save-png
+    (lambda (R fn)
+      (cairo-surface-write-to-png (renderer-surface R) fn)))
 
   (define render-translate
     (lambda (R dx dy)
@@ -44,6 +49,8 @@
   (define render-scale
     (lambda (R sx sy)
       (cairo-scale (renderer-context R) sx sy)))
+
+  (define render-do (lambda (R f) (f (renderer-context R))))
 
   ;;; ==================================================================
   ;;; Materials

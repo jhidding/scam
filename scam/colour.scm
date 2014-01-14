@@ -20,8 +20,8 @@
 
   (define hsv->rgb
     (lambda (h s v)
-      (let* ((H-i (mod (exact (floor (* 6 h))) 6))
-  	     (f   (- (* 6 h) H-i))
+      (let* ((H-i (exact (floor (* 6 (mod h 1.0)))))
+  	     (f   (- (* 6 (mod h 1.0)) H-i))
   	     (g   (if (even? H-i) (- 1 f) f))
   	     (p   (* v (- 1 s)))
   	     (q   (* v (- 1 (* g s)))))
@@ -82,6 +82,6 @@
 		(s (interp (colour-saturation c1) (colour-saturation c2) x))
 		(v (interp (colour-value      c1) (colour-value      c2) x))
 		(a (interp (colour-alpha      c1) (colour-alpha      c2) x)))
-	    (make-colour 'hsv h s v))))))
+	    (make-colour 'hsva h s v a))))))
 )
 
