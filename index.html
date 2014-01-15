@@ -1,1 +1,140 @@
-My GitHub Page
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+	
+<html>
+	<head>
+		<title>Scarlett -- a Kernel/Scheme interpreter</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+		<meta name="author" content="Johan Hidding">
+		<link type="text/css" rel="stylesheet" href="style.css">
+	</head>
+
+	<body> <div id="centred-content">
+		<div id="header"> <img src="umbilic.png" alt="$carlett"> <span class="txt">Scam <br>
+		<div style="position: relative; top: -150px; font: 16pt bold; font-family: 'GFS Didot'; text-align: right; padding:2pt;">
+			3D vector graphics for schemers	
+			</div> </span></div>
+		<div id="navigation"> 
+			<a href="#about">(About)</a>
+			<a href="#why">(Why)</a>
+			<a href="#state">(current State)</a>
+			<a href="#gallery">(Gallery)</a>
+			<a href="#source">(the Source)</a>
+		</div>
+		<div class="block">
+			<a id="about"><h2>About</h2></a>
+			</p>Scam is a set of Scheme modules for making publication quality printable 3D graphics. The name might be
+			a bit daunting, but it falls in a rich tradition among <a href="http://www.schemers.org">Schemers</a> and 
+			<a href="http://www.racket-lang.org">Racketeers</a>. It stands for Scheme CAMera. It is geared towards
+			the <a href="http://www.gnu.org/software/guile">GNU Guile</a> implementation of Scheme, together with
+			the <a href="http://www.cairographics.org">Cairo graphics library</a>. But, in light of portability, I try 
+			to stick to using <a href="http://www.r6rs.org/">R6RS</a> as much as possible.</p>
+			<p>Cairo is an excellent library for creating programmable 2D vector graphics. It is very structured
+			and easy to use, and can write output to many formats including SVG, PDF and PNG. Scam bundles a stack
+			of functions that describe a scene, being a collection of polygons. Each polygon is a collection of
+			sorted vertices and a material. To display the scene Scam projects it to a surface and plots the polygons
+			in (more or less) the right order. It doesn't support proper hiding of unseen polygons <b>yet</b>. Nevertheless,
+			this is enough to create some rather advanced graphics. I used Scam extensively to create the figures
+			in my paper: <a href="http://adsabs.harvard.edu/abs/2014MNRAS.437.3442H">"J. Hidding, S. F. Shandarin and R. van de Weygaert -
+			the Zeldovich Approximation: key to understanding cosmic web complexity"</a>. As an example: </p>
+			</p>
+			<img src="example1.png" alt="Example of complicated 3D vector graphics.">
+			</div>
+		<div class="block" id="why">
+			<a id="why"><h2>Why?</h2></a>
+			<div class="illustration"></div>
+			<p>There are numerous methods to create fancy 3D graphics on a computer. Sadly, most of them
+			focus on bringing you interactive visualisations through OpenGL. For the printed media
+			(some of us are very oldfashioned) options are limited. Say you want to plot an image of
+			a torus, this can be done using <a href="http://www.gnuplot.info/">GNU-Plot</a>.</p>
+			<img src="example_gnuplot.png" alt="Example of 3D plotting with GnuPlot.">
+			<p>That looks wonderful! However, GNU-Plot has some severe limitations (for those using Python + MatplotLib,
+			it has similar limitations). GNU-Plot doesn't know how to cut a polygon in half, leading to jaggedy edges
+			if the mesh is not uniform. Also we cannot easily shade the surface. A package that can do highly complicated
+			graphics is Mathematica. Try to export a 3D Mathematica plot to <tt>.pdf</tt> and enter hell. The resulting
+			file is huge, and many printers will hang on trying to print the images. Most important of all, Mathematica is not
+			free software, which would make it impossible for me to reproduce my work once I'm no longer at a University with
+			plenty budgets.</p>
+			</div>
+		<div class="block" id="state">
+			<a id="state"><h2>Current state</h2></a>
+			<div class="illustration"></div>
+			<p>Scam is not for the weak hearted. At the moment it requires you to know Scheme. (this is a feature, learning
+			Scheme is loads of fun, see <a href="http://groups.csail.mit.edu/mac/classes/6.001/abelson-sussman-lectures/">these video lectures by Abelson and Sussman</a>!) Most of all, it lacks
+			a GUI, requiring the user to put in camera positions and material properties by hand. Some nifty features Scam supports now:</p>
+			<ul>
+			<li> Parametric surfaces, both periodic and open-ended
+			<li> Generating both quadrilateral and triangulated meshes from arrays of points
+			<li> Parallel projection and weak perspective cameras
+			<li> Clipping polygons by a plane
+			<li> Computing the boundary of meshes
+			<li> Colour gradients in both RGB and HSV spaces
+			</ul>
+			And some on my whishlist:
+			<ul>
+			<li> Reading and writing <tt>.PLY</tt> files, this is the simplest format for storing 3D mesh data that is widely supported
+			<li> Computing contours of a manifold for a given camera position (caustic detection)
+			<li> Hiding unseen faces, requires set operations on 2D polygons (I know Inkscape can do it, but it seems like a tough problem)
+			<li> Connect line segments that can be plotted at the same time (needs previous two features)
+			<li> Dynamic GUI, saving and loading to Scheme coded project files (Show me a Scheme implementation with convincing high-level GTK support)
+			</ul>
+			</div>
+		<div class="block">
+			<a id="gallery"><h2>Gallery</h2></a>
+			<p>The source code to these examples is included in the distribution.</p>
+
+			<div class="exhibit"><div class="caption"><h3>Clipped torus</h3>
+			<p>This image shows both that clipping and edge detection works properly.</p></div>
+			<img src="torus.png" alt="clipped torus"></div>
+
+			<div class="exhibit"><div class="caption"><h3>Zeeman's Umbilic Bracelet</h3> 
+			<p>A very interesting surface. It is a three cusped toroidal, with a third turn, 
+			a bit like a M&ouml;bius strip.</p></div>
+			<img src="umbilic.png" alt="Zeeman's Umbilic Bracelet"></div>
+			</div>
+		<div class="block">
+			<a id="source"><h2>the Source</h2></a>
+			<p>The source code to Scam is available on <a href="http://www.github.com/jhidding/scam">GitHub</a>.
+			To download Scam say <pre>git clone https://github.com/jhidding/scam.git</pre> to your terminal
+			while sitting at a decent path. The code runs on Guile 2.0 with guile-cairo.
+			</p></div>
+		<address> 
+		by Johan Hidding, Copyright 2014, Contact me at:
+		<!--EScrambled Email Address Code--> 
+		 
+		<!--For help with this code go to--> 
+		<!--http://innerpeace.org/escrambler.shtml--> 
+		 
+		<script type="text/javascript">	
+		<!--
+		function escramble()
+		{
+			var a,b,c,d,e,f,g,h,i
+			a='<a href=\"mai'
+			b='johann'
+			c='\">'
+			b+='es.hiddi'
+			a+='lto:'
+			b+='ng'
+			b+='@'
+			e='<\/a>'
+			f=''
+			b+='gma'
+			g='<img src=\"'
+			h=''
+			b+='il.com'
+			i='\" alt="send me mail." border="0">'
+		 
+			if (f) d=f
+			else 
+				if (h) d=g+h+i
+				else d=b
+			
+			document.write(a+b+c+d+e)
+		}
+		//-->
+		escramble()
+		</script>
+		</address> 
+	</div> </body>
+</html>
