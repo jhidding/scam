@@ -154,6 +154,57 @@
       (if (eof-object? data) (cc '(error "could not read from file")))
       data)))
 
+(define ply-type-map 
+  `((char   1 ,bytevector-s8-ref)
+    (uchar  1 ,bytevector-u8-ref)
+    (short  2 ,bytevector-s16-ref)
+    (ushort 2 ,bytevector-u16-ref)
+    (int    4 ,bytevector-s32-ref)
+    (uint   4 ,bytevector-u32-ref)
+    (float  4 ,bytevector-ieee-single-ref)
+    (double 8 ,bytevector-ieee-double-ref)))
+
+(define ply-make-ref
+  (lambda (type-symb endianness)
+    (let* ((type (assq type-symb ply-type-map))
+	   (ref  (caddr type))
+	   (size (cadr type)))
+
+      (lambda (src idx)
+	(values (+ idx size) (ref src idx endianness))))))
+
+(define ply-make-ref-n
+  (lambda (type-symb endianness)
+    (let* ((type (assq type-symb ply-type-map))
+	   (ref  (caddr type))
+	   (size (cadr type)))
+
+      (lambda (src idx n)
+	(let loop ((i idx)
+		   (j n)
+		   (r '()))
+	  (if (zero? j) 
+	    (values i (reverse r))
+	    (loop (+ i size) (- j 1) (cons (ref src i endianness)))))))))
+
+(define ply-make-ref-list
+  (lambda (t-idx-s t-values-s endianness)
+    (let ((A (ply-make-ref t-idx-s endianness))
+	  (B (ply-make-ref-n t-value-s endianness)))
+
+      (lambda (src idx)
+	(call-with-values ($ A src idx) ($ B src))))))
+
+(define ply-repeat-read
+  (lambda (f n start)
+    (let loop ((j n) 
+	       (i start) 
+	       (result '()))
+      (if (zero? j)
+	(reverse result)
+        (let-values (((next v) (f i)))
+	  (loop (- j 1) next (cons v result)))))))
+
 (define ply-make-bytevector-reader
   (lambda type-list
     (lambda (src idx)
@@ -164,13 +215,9 @@
 	  ((null? T) (values (reverse result) i))
 	  ((pair? (car T))
 	   (call-with-values 
-	     ($ ply-read-n src (caar T) i 1)
-	     ($ ply-read-n src (cdar T))) ....
+	     ($ ply-ref src (caar T) i)
+	     ($ ply-ref-n src (cdar T)))
 
-
-(define ply-next-element
-  (lambda (data idx element)
-    
 
 (define exit-on-error
   (lambda (X)
