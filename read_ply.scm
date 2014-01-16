@@ -69,6 +69,7 @@
       (lambda (str)
         (string=? str (substring line 0 (string-length str)))))
 
+    ; interprets format string
     (define format-option
       (lambda (fmt-str)
         (cond
@@ -84,6 +85,7 @@
 	   (print "Fie upon you! Yo mom so big endian ...\n")
 	   'binary-be))))
 	  
+    ; destill type information
     (define build-type
       (lambda (items)
         (let loop ((result '())
@@ -99,6 +101,7 @@
             (else
 	     (loop (cons (string->symbol (car rest)) result) (cdr rest)))))))
     
+    ; put it together
     (cond
       ((starts-with "comment") (list 'comment (substring line 7 (string-length line))))
 
@@ -154,9 +157,12 @@
       (if (eof-object? data) (cc '(error "could not read from file")))
       data)))
 
+(define ply-bv-s8-ref (lambda (src idx ignore-endianness) (bytevector-s8-ref src idx)))
+(define ply-bv-u8-ref (lambda (src idx ignore-endianness) (bytevector-u8-ref src idx)))
+
 (define ply-type-map 
-  `((char   1 ,bytevector-s8-ref)
-    (uchar  1 ,bytevector-u8-ref)
+  `((char   1 ,ply-bv-s8-ref)
+    (uchar  1 ,ply-bv-u8-ref)
     (short  2 ,bytevector-s16-ref)
     (ushort 2 ,bytevector-u16-ref)
     (int    4 ,bytevector-s32-ref)
@@ -164,60 +170,79 @@
     (float  4 ,bytevector-ieee-single-ref)
     (double 8 ,bytevector-ieee-double-ref)))
 
+(define repeat-scan
+  (lambda (func start n)
+    (let loop ((m n) 
+	       (idx start) 
+	       (result '()))
+      (if (zero? m)
+	(values idx (reverse result))
+	((comp ($ loop (- m 1)) (splice id ($ cons -- result)) func)
+	 idx)))))
+
 (define ply-make-ref
-  (lambda (type-symb endianness)
+  (lambda (src type-symb endianness)
     (let* ((type (assq type-symb ply-type-map))
 	   (ref  (caddr type))
 	   (size (cadr type)))
 
-      (lambda (src idx)
+      (lambda (idx)
 	(values (+ idx size) (ref src idx endianness))))))
 
 (define ply-make-ref-n
-  (lambda (type-symb endianness)
-    (let* ((type (assq type-symb ply-type-map))
-	   (ref  (caddr type))
-	   (size (cadr type)))
-
-      (lambda (src idx n)
-	(let loop ((i idx)
-		   (j n)
-		   (r '()))
-	  (if (zero? j) 
-	    (values i (reverse r))
-	    (loop (+ i size) (- j 1) (cons (ref src i endianness)))))))))
+  (lambda (src type-symb endianness)
+    (let ((ref (ply-make-ref src type-symb endianness)))
+      (comp (splice id list->vector) ($ repeat-scan ref)))))
 
 (define ply-make-ref-list
-  (lambda (t-idx-s t-values-s endianness)
-    (let ((A (ply-make-ref t-idx-s endianness))
-	  (B (ply-make-ref-n t-value-s endianness)))
+  (lambda (src t-idx-s t-values-s endianness)
+    (let ((A (ply-make-ref src t-idx-s endianness))
+	  (B (ply-make-ref-n src t-values-s endianness)))
+      (comp B A))))
 
-      (lambda (src idx)
-	(call-with-values ($ A src idx) ($ B src))))))
+(define ply-type->reader
+  (lambda (src type endianness)
+    (if (pair? type)
+      (ply-make-ref-list src (car type) (cdr type) endianness)
+      (ply-make-ref src type endianness))))
 
-(define ply-repeat-read
-  (lambda (f n start)
-    (let loop ((j n) 
-	       (i start) 
-	       (result '()))
-      (if (zero? j)
-	(reverse result)
-        (let-values (((next v) (f i)))
-	  (loop (- j 1) next (cons v result)))))))
+(define ply-make-binary-block-reader
+  (lambda (src type-list endianness)
+    (let ((readers (map ($ ply-type->reader src -- endianness) type-list)))
+      (lambda (i)
+        (let loop ((R readers)
+	           (idx i)
+	           (result '()))
+	  (if (null? R) 
+	    (values idx (reverse result))
+	    ((comp ($ loop (cdr R)) (splice id ($ cons -- result)) (car R))
+	     idx)))))))
 
-(define ply-make-bytevector-reader
-  (lambda type-list
-    (lambda (src idx)
-      (let loop ((result '())
-                 (i idx)
-                 (T type-list))
-        (cond
-	  ((null? T) (values (reverse result) i))
-	  ((pair? (car T))
-	   (call-with-values 
-	     ($ ply-ref src (caar T) i)
-	     ($ ply-ref-n src (cdar T)))
+(define ply-read-binary-element
+  (lambda (src element endianness idx)
+    (let* ((type-list (map caddr (cdr element)))
+           (reader    (ply-make-binary-block-reader src type-list endianness))
+           (count     (caddar element)))
+      (repeat-scan reader idx count))))
+      
+(define ply-read-body
+  (lambda (fi header)
+    (cond
+      ((or (eq? (car header) 'binary-le) (eq? (car header) 'binary-be))
+       (let ((data (exit-on-error (call/cc ($ ply-read-binary-data fi)))))
+         (let loop ((E (cdr header))
+	            (idx 0)
+		    (result '()))
+	   (if (null? E)
+	     (values idx (reverse result))
+	     ((comp ($ loop (cdr E)) (splice id ($ cons -- result))
+	            ($ ply-read-binary-element data (car E) (if (eq? (car header) 'binary-le) 
+		                                              (endianness little) 
+							      (endianness big))))
+	      idx)))))
 
+      ((eq? (car header) 'ascii)
+       (print "ERROR: ascii not yet supported\n") (exit)))))
 
 (define exit-on-error
   (lambda (X)
@@ -228,7 +253,10 @@
 				   (exit)))
       (else X))))
 
-(let* ((fi     (open-file-input-port (cadr (command-line))))
-       (header (exit-on-error (call/cc ($ ply-read-header fi)))))
-  (display header) (newline))
+(let* ((fi       (open-file-input-port (cadr (command-line))))
+       (header   (exit-on-error (call/cc ($ ply-read-header fi))))
+       (data     ((comp second ($ ply-read-body fi header)))))
+
+  (for-each ($ print -- "\n--------------------------------\n")
+    data))
 

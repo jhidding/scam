@@ -49,7 +49,7 @@
 	(phi 	(lin-space 0 1 n2)))
     (parametric-open-triangle-mesh (zeeman-umbilic r1 r2) theta phi)))
 
-(let* ((T (solid-umbilic 1 0.5 41 37))
+(let* ((T (solid-umbilic 1 0.4 41 37))
 
        (M1 (make-material-linefill-fn
 	     (lambda (z normal set-colour set-lw fill stroke)

@@ -12,7 +12,7 @@
     group-2 remove-doubles
     
     ; functional tools
-    comp juxt first second third flip reverse-args
+    comp juxt splice first second third flip reverse-args
     partial partial* id <- $ args thunk on
 
     ; mapping, folding, unfolding
@@ -160,6 +160,10 @@
     (lambda (x) (apply values x)))
 
   (define args (lambda X X))
+
+  (define splice
+    (lambda F
+      (comp <- ($ map (lambda (f . X) (apply f X)) F) args)))
 
   (define juxt
     (lambda F
