@@ -140,7 +140,9 @@
            (format (cadr (assq 'format lines)))
 	   (blocks (cdr (split-list (comp ($ eq? 'element) car) lines))))
       
-      (for-each (lambda (c) (print "#| " (cadr c) "\n")) (filter (comp ($ eq? 'comment) car) lines))
+      (for-each (lambda (c) (print "#| " (cadr c) "\n")) 
+		(filter (comp ($ eq? 'comment) car) lines))
+
       (for-each (lambda (b)
         (print "Element " (cadar b) " #" (caddar b) "\n")
 	(for-each (lambda (p)
@@ -177,8 +179,10 @@
 	       (result '()))
       (if (zero? m)
 	(values idx (reverse result))
-	((comp ($ loop (- m 1)) (splice id ($ cons -- result)) func)
-	 idx)))))
+	(let-values (((idx value) (func idx)))
+	  (loop (- m 1) idx (cons value result)))))))
+	;((comp ($ loop (- m 1)) (splice id ($ cons -- result)) func)
+	; idx)))))
 
 (define ply-make-ref
   (lambda (src type-symb endianness)
@@ -215,8 +219,10 @@
 	           (result '()))
 	  (if (null? R) 
 	    (values idx (reverse result))
-	    ((comp ($ loop (cdr R)) (splice id ($ cons -- result)) (car R))
-	     idx)))))))
+	    (let-values (((idx value) ((car R) idx)))
+	      (loop (cdr R) idx (cons value result)))))))))
+	    ;((comp ($ loop (cdr R)) (splice id ($ cons -- result)) (car R))
+	    ; idx)))))))
 
 (define ply-read-binary-element
   (lambda (src element endianness idx)
@@ -235,11 +241,17 @@
 		    (result '()))
 	   (if (null? E)
 	     (values idx (reverse result))
-	     ((comp ($ loop (cdr E)) (splice id ($ cons -- result))
-	            ($ ply-read-binary-element data (car E) (if (eq? (car header) 'binary-le) 
-		                                              (endianness little) 
-							      (endianness big))))
-	      idx)))))
+	     (let-values (((idx value) (ply-read-binary-element 
+					 data (car E) 
+					 (if (eq? (car header) 'binary-le) 
+		                           (endianness little) 
+					   (endianness big)) idx)))
+	       (loop (cdr E) idx (cons value result)))))))
+	     ;((comp ($ loop (cdr E)) (splice id ($ cons -- result))
+	     ;       ($ ply-read-binary-element data (car E) (if (eq? (car header) 'binary-le) 
+	     ;                                              (endianness little) 
+	     ;						      (endianness big))))
+	     ; idx)))))
 
       ((eq? (car header) 'ascii)
        (print "ERROR: ascii not yet supported\n") (exit)))))
