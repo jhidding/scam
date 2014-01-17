@@ -142,7 +142,7 @@
 	     (line-to (comp ($ cairo-line-to ctx) <-)))
 
 	(if (not (null? pts)) (begin
-	(cairo-save ctx) ; (cairo-set-line-cap ctx 'round)
+	(cairo-save ctx) 
 	(move-to (car pts)) (for-each line-to (cdr pts))
 	(if close? (cairo-close-path ctx)) (mat ctx) (cairo-new-path ctx)
 	(cairo-restore ctx))))))
