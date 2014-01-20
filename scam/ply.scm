@@ -1,8 +1,38 @@
 (library (scam ply)
-  #|
+  #| PLY reader support
+   |   This library reads .PLY files. All information on reading .PLY files was
+   |   retrieved from Paul Bourke's pages. [http://paulbourke.net/dataformats/ply/]
+   |   The .PLY format, also known as the Stanford Triangle format, is the simplest 
+   |   format for storing 3D mesh information that is widely used. In principle it
+   |   is mainly used to store the geometric information of the mesh, but it can be
+   |   easily extended to store much more. The file starts with a text header which
+   |   may look like this:
+   |
+   |     ply
+   |     format binary_little_endian 1.0
+   |     comment VCGLIB generated
+   |     element vertex 511
+   |     property float x
+   |     property float y
+   |     property float z
+   |     element face 999
+   |     property list uchar int vertex_indices
+   |     end_header
+   |
+   |   In this case the file is binary, and the following data (right after the
+   |   newline following "end_header") contains single precision binary x,y,z values
+   |   (511 of them, making 3*4*511 = 6132 bytes). After that follow 999 faces
+   |   of variable length. The precise composition of the header part is explained
+   |   in more detail in comments below.
+   |
+   |   In the case of an ascii file, each element occupies a single line. If the
+   |   above header were that of an ascii formatted .PLY, the second line becomes
+   |   "format ascii 1.0", and the rest of the file contains 511 lines of vertices
+   |   and 999 lines of polygons. The integers of each polygon designating the
+   |   corresponding vertices by index, in the order that they are given in the file.
    |#
 
-  (export ply-test read-ply)
+  (export read-ply read-ply-polygon-mesh)
 
   (import (rnrs (6))
           (rnrs io ports (6))
@@ -263,21 +293,13 @@
 
   #| (ply-make-binary-block-reader ...) -> (f idx) -> (values idx [a])
    |   takes a list of types and returns a function returning a list of
-   |   of values. TODO needs more elegance...
+   |   of values.
    |#
   (define ply-make-binary-block-reader
     (lambda (src type-list endianness)
       (let ((readers (map ($ ply-type->reader src -- endianness) type-list)))
 	($ ply-reader-loop readers))))
 
-          ;(let loop ((R readers)
-          ;           (idx i)
-          ;           (result '()))
-          ;  (if (null? R) 
-          ;    (values idx (reverse result))
-          ;    (let-values (((idx value) ((car R) idx)))
-          ;      (loop (cdr R) idx (cons value result)))))))))
-  
   #| (ply-read-binary-element src element endianness idx) -> (values idx #(...))
    |   given an element description in the form
    |     (('element <name> <count>) ('property <name> <type>) ...)
@@ -299,6 +321,7 @@
 	        (endness (if (eq? (car header) 'binary-le)
 		           (endianness little) (endianness big)))
 	        (readers (map ($ ply-make-binary-element-reader data -- endness) (cdr header))))
+
 	   (call-with-values
 	     ($ ply-reader-loop readers 0)
 	     (lambda (idx lst) (map cons (map cadar (cdr header)) (map list->vector lst))))))
@@ -319,6 +342,13 @@
     (lambda (fn)
       (let* ((fi     (open-file-input-port fn))
              (header (exit-on-error (call/cc ($ ply-read-header fi))))
+	     (data   (ply-read-body fi header)))
+        data)))
+
+  (define read-ply-polygon-mesh
+    (lambda (fn)
+      (let* ((fi     (open-file-input-port fn))
+             (header (exit-on-error (call/cc ($ ply-read-header fi))))
 	     (data   (ply-read-body fi header))
 
              (vertex-data (cdr (assoc "vertex" data)))
@@ -327,19 +357,5 @@
 	     (vertices    (vector-map (comp point->vertex :. <-) vertex-data))
 	     (polygons    (vector-map (comp ($ make-polygon) ($ map ($ vector-ref vertices)) vector->list) face-data)))
         polygons)))
-	     
-
-  (define ply-test
-    (lambda (fn)
-      (let* ((fi       (open-file-input-port fn))
-             (header   (exit-on-error (call/cc ($ ply-read-header fi))))
-             (data     (ply-read-body fi header))
-             (vertex-data (cdr (assoc "vertex" data)))
-             (face-data   (vector-map car (cdr (assoc "face" data)))))
-
-      (print "vertices ===================================\n")
-      (vector-for-each ($ print -- "\n") vertex-data)
-      (print "faces ======================================\n")
-      (vector-for-each ($ print -- "\n") face-data))))
   ;;; }}}1
 )

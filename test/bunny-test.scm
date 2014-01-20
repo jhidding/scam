@@ -4,7 +4,7 @@
 	(cairo)
 	(scam ply))
 
-(let* ((T  (vector->list (read-ply (cadr (command-line)))))
+(let* ((T  (vector->list (read-ply-polygon-mesh (cadr (command-line)))))
        (M1 (make-material-linefill-fn
 	     (lambda (z normal set-colour set-lw fill stroke)
 	       (let* ((c (colour-hsv-gradient (make-colour 'hsva 0.6 1.0 0.2 1.0)
