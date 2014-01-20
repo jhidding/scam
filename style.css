@@ -149,6 +149,11 @@ h2
 	background: url('butterfly.jpg');
 }
 
+#gallery .illustration
+{
+	background: url('kunstkamer.jpg');
+}
+
 #navigation
 {
 	font:		normal 12pt/21pt Inconsolata, monospace, sans-serif;
