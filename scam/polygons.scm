@@ -3,7 +3,7 @@
   (export make-vertex vertex? point->vertex vertex->point
 	  make-plane plane? points->plane plane-origin plane-normal
 	  make-segment segment? segment-points segment-add-material segment-material
-	  segment-hash segment-equal?
+	  segment-hash segment-equal? segment-info
 	  polygon-add-material polygon-material polygon-plane
 	  make-polygon polygon? polygon-points polygon-vertices polygon-info
 	  make-locus locus->point locus-material locus-add-material locus?

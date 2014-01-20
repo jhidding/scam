@@ -324,7 +324,8 @@
 
 	   (call-with-values
 	     ($ ply-reader-loop readers 0)
-	     (lambda (idx lst) (map cons (map cadar (cdr header)) (map list->vector lst))))))
+	     (comp ($ map cons (map cadar (cdr header))) 
+	           ($ map list->vector) second))))
   
         ((eq? (car header) 'ascii)
          (print "ERROR: ascii not yet supported\n") (exit)))))
