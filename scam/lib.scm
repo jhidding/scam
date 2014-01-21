@@ -28,7 +28,8 @@
     print
 
     ; streams
-    lazy head tail list->lazy lazy->list lazy-map
+    lazy head tail list->lazy lazy->list lazy-map vector->lazy
+    lazy-filter lazy-find-first
   )
 
   (import (rnrs (6)))
@@ -331,6 +332,12 @@
 
   (define list->lazy
     (lazy (lst) (car lst) (cdr lst) (null? lst)))
+
+  (define vector->lazy
+    (lazy (vec idx) 
+      (vector-ref vec idx) 
+      (values vec (+ idx 1))
+      (= idx (vector-length vec))))
   
   (define lazy->list
     (lambda (x)
@@ -341,6 +348,20 @@
       (apply f (map head X))
       (apply values f (map tail X))
       (null? (car X))))
+
+  (define lazy-find-first
+    (lambda (f lst)
+      (cond
+        ((null? lst) '()) 
+        ((f (head lst)) lst)
+        (else (lazy-find-first f (tail lst))))))
+  
+  (define lazy-filter
+    (lambda (f lst)
+      (let ((loop  (lazy (f lst) 
+                     (head lst) (values f (lazy-find-first f (tail lst))) (null? lst)))
+            (start (lazy-find-first f lst)))
+        (loop f start))))
   ; }}}1
 )
 

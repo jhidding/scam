@@ -20,7 +20,8 @@
     print
 
     ; streams
-    lazy head tail list->lazy lazy->list lazy-map
+    lazy head tail list->lazy lazy->list lazy-map lazy-filter
+    lazy-find-first vector->lazy
     
     ; vectors
     :. :> a-dot a-add a-translate a-scale
@@ -41,7 +42,7 @@
     render-save-png
     
     ; geometry
-    clip-by-plane
+    polygon-o-plane clip-by-plane
     
     ; camera
     camera-transform parallel-projection weak-perspective-projection

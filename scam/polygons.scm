@@ -52,7 +52,9 @@
       (let ((origin b)
 	    (normal (a-normalize (a-cross (a-distance b c)
 					  (a-distance b a)))))
-	(make-plane origin normal))))
+        (if (any nan? (a-vector->list normal))
+	  #f
+	  (make-plane origin normal)))))
 
   (define vertex-list->plane
     (comp points->plane <- ($ map vertex->point) ($ take 3)))
@@ -165,9 +167,18 @@
 			        (cons 'hash  (n-cell-hash p))))
 	 p))
 
-      ((vertices info) (let ((p (make-n-cell 2 vertices)))
-	 (n-cell-i-set! p (renew-hash info (n-cell-hash p)))
-	 p))))
+      ((vertices info) (cond
+         ((not (assq 'plane info)) 
+	   (let* ((p (make-n-cell 2 vertices))
+	          (A (vertex-list->plane vertices)))
+	     (n-cell-i-set! p (append info (list (cons 'plane A)
+	                                         (cons 'hash (n-cell-hash p)))))
+	     p))
+
+	 (else (let* ((p (make-n-cell 2 vertices))
+	              (i (renew-hash info (n-cell-hash p))))
+	   (n-cell-i-set! p i)
+	   p))))))
 
   (define polygon?
     (lambda (c) (and (n-cell? c) (= 2 (n-cell-n c)))))
