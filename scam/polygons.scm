@@ -7,7 +7,7 @@
 	  polygon-add-material polygon-material polygon-plane
 	  make-polygon polygon? polygon-points polygon-vertices polygon-info
 	  make-locus locus->point locus-material locus-add-material locus?
-	  polygon-normal polygons-boundary)
+	  polygon-normal polygons-boundary polygon-get-info polygon-set-info!)
 
   (import (rnrs (6))
 	  (rnrs hashtables (6))
@@ -185,6 +185,17 @@
 
   (define polygon-info
     (lambda (p) (n-cell-info p)))
+
+  (define polygon-get-info
+    (lambda (p key)
+      (let ((i (assq key (polygon-info p))))
+        (if i (cdr i) #f))))
+
+  (define polygon-set-info!
+    (lambda (p key value)
+      (n-cell-i-set! p (append (remp (comp ($ eq? key) car) (polygon-info p))
+                               (list (cons key value))))
+      p))
   
   (define polygon-plane
     (comp cdr ($ assq 'plane) n-cell-info))

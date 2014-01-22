@@ -78,10 +78,11 @@
     (let ((interp (lambda (a b x) (+ a (* x (- b a))))))
       (lambda (c1 c2)
         (lambda (x)
+	  (if (nan? x) c1
 	  (let ((h (interp (colour-hue        c1) (colour-hue        c2) x))
 		(s (interp (colour-saturation c1) (colour-saturation c2) x))
 		(v (interp (colour-value      c1) (colour-value      c2) x))
 		(a (interp (colour-alpha      c1) (colour-alpha      c2) x)))
-	    (make-colour 'hsva h s v a))))))
+	    (make-colour 'hsva h s v a)))))))
 )
 

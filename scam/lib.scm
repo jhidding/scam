@@ -25,7 +25,7 @@
     range lin-space indices sqr
 
     ; easy printing
-    print
+    print print-list-topology
 
     ; streams
     lazy head tail list->lazy lazy->list lazy-map vector->lazy
@@ -305,6 +305,23 @@
   (define print
     (lambda X
       (for-each display X)))
+
+  (define print-list-topology
+    (lambda (lst)
+      (cond
+        ((list? lst) (print "([" (length lst) "] ")
+                     (print-list-topology (car lst))
+                     (print " ")
+                     (print-list-topology (cadr lst))
+                     (print " ...)"))
+  
+        ((vector? lst) (print "#([" (vector-length lst) "] ")
+                       (print-list-topology (vector-ref lst 0))
+                       (print " ")
+                       (print-list-topology (vector-ref lst 1))
+                       (print " ...)"))
+  
+        (else        (print lst)))))
   ; }}}1
 
   ; streams {{{1

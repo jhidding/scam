@@ -63,10 +63,11 @@
 			    ;parallel-projection))
 			    (weak-perspective-projection 4.0)))
 
-       (R (make-pdf-renderer C 800 600 "torus.pdf")))
+       (R (make-svg-renderer C 600 600 "torus.svg")))
 
   (render-scale R 250 250)
-  (render-translate R 400/250 300/250)
+  (render-translate R 300/250 300/250)
   (render-scene R (append Q cuts))
+  (render-save-png R "torus.png")
   (render-finish R))
 

@@ -113,8 +113,12 @@
 		(lambda (C P)
 		  (cond
 		    ((polygon? P) (let* ((normal (C (polygon-normal P)))
-					 (points (map (comp (lambda (x y z) (list z x y)) C) 
-						      (polygon-points P)))
+					 (points (let ((hint (polygon-get-info P 'render-hint)))
+					           (if hint
+					             (map (comp (lambda (x y z) (list z x y)) (lambda (p) (C hint p)))
+						            (polygon-points P))
+					             (map (comp (lambda (x y z) (list z x y)) (lambda (p) (C p))) 
+						            (polygon-points P)))))
 					 (material ((polygon-material P) (caar points) normal)))
 				    
 				    (if (null? points) 

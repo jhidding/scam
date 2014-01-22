@@ -73,8 +73,8 @@
        (L 600)
        (R (make-svg-renderer C L L "umbilic.svg")))
 
-  (render-scale R (* 1/3 L) (* 1/3 L))
-  (render-translate R 3/2 3/2)
+  (render-scale R (* 0.38 L) (* 0.38 L))
+  (render-translate R 1.32 1.32)
   (render-scene R P)
   (render-save-png R "umbilic.png")
   (render-finish R))

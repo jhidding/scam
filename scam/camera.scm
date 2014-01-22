@@ -57,29 +57,33 @@
   (define camera-transform
     (lambda (position target shub projection)
       (let* ((translate     ($ a-distance position))
-	     (line-of-sight (a-normalize (translate target)))
-	     (origin        (make-a-point  0 0 0))
-	     (z-axis        (make-a-vector 0 0 1))
-
-	     ; The line of sight has to become the z-axis in the new
-	     ; coordinate system. So we have to rotate around the cross
-	     ; product of z-axis and l.o.s.
-	     (adjust        (a-normalize (a-cross z-axis line-of-sight)))
-	     (pitch         (rotation-quat adjust (acos (a-dot z-axis line-of-sight))))
-
-	     ; The shub should point up! It should not be in the line of
-	     ; sight, or else we don't know what's up.
-	     (roll-angle    (let* ((v (quat-conjugation pitch shub))
-				   (x (a-vector-x v))
-				   (y (a-vector-y v)))
-			      (+ 1.5707963267948966 (atan (/ y x)))))
-	     (roll          (rotation-quat z-axis roll-angle))
-	     (rotate        ($ quat-conjugation (quat-mul roll pitch))))
-
-	(lambda (p)
-	  (cond 
-	    ((a-point? p)  ((comp projection rotate translate) p))
-	    ((a-vector? p) (rotate p)))))))
+             (line-of-sight (a-normalize (translate target)))
+             (origin        (make-a-point  0 0 0))
+             (z-axis        (make-a-vector 0 0 1))
+  
+             ; The line of sight has to become the z-axis in the new
+             ; coordinate system. So we have to rotate around the cross
+             ; product of z-axis and l.o.s.
+             (adjust        (a-normalize (a-cross z-axis line-of-sight)))
+             (pitch         (rotation-quat adjust (acos (a-dot z-axis line-of-sight))))
+  
+             ; The shub should point up! It should not be in the line of
+             ; sight, or else we don't know what's up.
+             (roll-angle    (let* ((v (quat-conjugation pitch shub))
+                                   (x (a-vector-x v))
+                                   (y (a-vector-y v)))
+                              (+ 1.5707963267948966 (atan (/ y x)))))
+             (roll          (rotation-quat z-axis roll-angle))
+             (rotate        ($ quat-conjugation (quat-mul roll pitch))))
+  
+        (case-lambda 
+  	  ((p) (cond
+            ((a-point? p)  ((comp projection rotate translate) p))
+            ((a-vector? p) (rotate p))))
+  
+          ((hint p) (cond 
+            ((a-point? p)  ((comp (projection hint) rotate translate) p))
+            ((a-vector? p) (rotate p))))))))
 
   (define parallel-projection
     (comp <- a-vector->list))
