@@ -47,7 +47,7 @@
    | It is assumed that the points do not lie in or parallel to the
    | plane. Make sure they aren't!
    +------------------------------------------------------------------|#
-  (define intersection
+  (define plane-segment-intersection
     (lambda (A p q)
       (let* ((v (a-distance p q))
 	     (t (/ (a-dot (plane-normal A)
