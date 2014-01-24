@@ -59,7 +59,7 @@
   (define intersection-plane-segment!
     (lambda (cache A s)
       (let* ((I (hashtable-ref cache s #f))
-	     (v (if I I (make-vertex (apply intersection A (segment-points s))))))
+	     (v (if I I (make-vertex (apply plane-segment-intersection A (segment-points s))))))
 	(if (not I) (hashtable-set! cache s v))
 	v)))
 
