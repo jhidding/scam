@@ -2,7 +2,7 @@
 
   (export make-sphere sphere? sphere-radius sphere-origin
           distance-to-sphere cut-polygon-by-sphere
-	  split-by-sphere)
+	  split-by-sphere sphere-segment-intersection)
 
   (import (rnrs (6))
           (scam lib)
@@ -29,37 +29,37 @@
 
   (define sphere-line-intersection
     (lambda (S p q)
-      (let* ((l  (a-distance p q))
-             (m  (a-distance (sphere-origin S) p))
+      (let* ((l  (a-distance q p))
+             (m  (a-distance p (sphere-origin S)))
 	     (l2 (a-sqr l))
 	     (m2 (a-sqr m))
 	     (lm (a-dot l m))
 	     (r  (sphere-radius S))
 
-	     (D  (+ (* lm lm) (- m2) (* r r))))
+	     (D  (- (* lm lm) (* l2 (- m2 (* r r))))))
 
         (if (< D 0) #f
-	  (list (/ (+ (- lm) (sqrt D)) l2)
-	        (/ (- (- lm) (sqrt D)) l2))))))
+	  (list (/ (- (- lm) (sqrt D)) l2)
+	        (/ (+ (- lm) (sqrt D)) l2))))))
 
   (define sphere-segment-intersection 
     (lambda (S p q)
       (let ((f (sphere-line-intersection S p q))
-            (l (a-distance p q)))
+            (l (a-distance q p)))
         (cond
 	  ((not f) #f)
 
 	  ((and (< (car f) 0) (> (cadr f) 1)) #f)
 
 	  ((< (car f) 0) 
-	   (a-translate (a-scale (car f) l) p))
-
-	  ((> (cadr f) 1) 
 	   (a-translate (a-scale (cadr f) l) p))
 
+	  ((> (cadr f) 1) 
+	   (a-translate (a-scale (car f) l) p))
+
 	  (else (list
-	   (a-translate (a-scale (cadr f) l) p)
-	   (a-translate (a-scale (car f) l) p)))))))
+	   (a-translate (a-scale (car  f) l) p)
+	   (a-translate (a-scale (cadr f) l) p)))))))
 
   (define polygon-o-sphere
     (lambda (epsilon A p)
@@ -79,17 +79,18 @@
 	       (v (if I I (apply f obj args))))
 
 	  (if (not I) 
-	    (hashtable-set! cache obj v)
-	    v)))))
+	    (hashtable-set! cache obj v))
+
+	  v))))
 
   (define sphere-segment-intersection!
     (caching-function 
       (lambda (seg Sph)
         (let ((v (apply sphere-segment-intersection Sph (segment-points seg))))
 	  (cond
-	    ((not v) #f)
+	    ((not v) (print "??? ") #f)
 	    ((not (list? v)) (make-vertex v))
-	    (else (map make-vertex v)))))))
+	    (else (print "!!! ") (map make-vertex v)))))))
 
   (define cut-polygon-by-sphere
     (lambda (cache A p)
@@ -129,16 +130,14 @@
                          (let ((orf (polygon-o-sphere 1e-4 Sph p)))
                            (cond 
                              ((eq? orf 'intersect) (cut-polygon-by-sphere cache Sph p))
-                             ((eq? orf 'below) (values p #f))
-                             ((eq? orf 'above) (values #f p))
-                             (else (values #f #f)))
-  
-                           (values p #f))))
+                             ((eq? orf 'above) (values p #f))
+                             ((eq? orf 'below) (values #f p))
+                             (else (values #f #f))))))
   
              (build    (lambda (lst-a lst-b a b)
-	                 (let ((nla (if a (cons a lst-a) lst-a))
-			       (nlb (if b (cons b lst-b) lst-b)))
-			   (values lst-a lst-b)))))
+	                 (let ((nla (if (and a (not (null? (polygon-vertices a)))) (cons a lst-a) lst-a))
+			       (nlb (if (and b (not (null? (polygon-vertices b)))) (cons b lst-b) lst-b)))
+			   (values nla nlb)))))
 
         (let loop ((ra  '())
 	           (rb  '())

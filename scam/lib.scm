@@ -309,6 +309,8 @@
   (define print-list-topology
     (lambda (lst)
       (cond
+	((null? lst) (print "()"))
+
         ((list? lst) (print "([" (length lst) "] ")
                      (print-list-topology (car lst))
                      (print " ")
