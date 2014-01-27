@@ -1,8 +1,48 @@
 (library (scam spheres)
-
+  #|==================================================
+   | Spheres
+   |
+   | This file combines some algorithms working on spheres.
+   |
+   | The record-type 'sphere' results in:
+   |   make-sphere <origin> <radius>
+   |   sphere-radius, sphere-origin, sphere?
+   |
+   | distance-to-sphere <sphere> <point> -> real
+   |   The distance to a sphere is the distance to the origin
+   |   minus the radius.
+   |
+   | point-inside-sphere? <sphere> <point> -> boolean
+   |   distance-to-sphere < 0?
+   |
+   | sphere-line-intersection <sphere> <point a> <point b> -> [real ...]
+   |   computes the intersection between a sphere and a line,
+   |   where the line is given by two points a and b. The result
+   |   gives the position of the points of intersection in terms
+   |   of the unit a->b. A value of 0 means the point a, a value of
+   |   1 the point b, a value of -1 the reflection of b on a etc.
+   |   The result is computed by solving the algebraic equation
+   |     (<o> - <a> - d (<b> - <a>))^2 == r^2,
+   |   for the value of d.
+   |
+   | sphere-segment-intersection <sphere> <point a> <point b> -> [point ...]
+   |   computes the points of intersection limited to the segment <b>-<a>.
+   |
+   | For most practical applications, we will consider big spheres,
+   | meaning we only treat intersections from out to inside or vice-versa.
+   | If segments are small enough, the result will look fine. In this
+   | case the rest of the intersection algorithms should be identical to
+   | the ones we have for the plane intersection. The code should be
+   | refactored to reflect this. Higher order functions:
+   |
+   | cut-polygon-by-sphere <sphere> <polygon> -> (values polygon polygon)
+   | split-by-sphere <sphere> [polygon ...] -> (values [polygon ...] [polygon ...])
+   | select-shell <point origin> <real r1> <real r2> -> (func ([polygon ...]) -> ...)
+   |#
   (export make-sphere sphere? sphere-radius sphere-origin
           distance-to-sphere cut-polygon-by-sphere
-	  split-by-sphere sphere-segment-intersection)
+	  split-by-sphere sphere-segment-intersection
+	  select-shell)
 
   (import (rnrs (6))
           (scam lib)
@@ -92,13 +132,26 @@
 	    ((not (list? v)) (make-vertex v))
 	    (else (print "!!! ") (map make-vertex v)))))))
 
+  (define cut-segment-by-sphere
+    (lambda (A p)
+      (let ((pts  (segment-vertices p))
+	    (info (segment-info p))
+	    (v    (apply sphere-segment-intersection A (segment-points p))))
+	(if (or (not v) (list? v)) (values #f #f)
+	  (let ((new-p (make-vertex v)))
+	    (if (point-inside-sphere? A (vertex->point (car pts)))
+	      (values (make-segment (list new-p (cadr pts)) info)
+		      (make-segment (list (car pts) new-p) info))
+	      (values (make-segment (list (car pts) new-p) info)
+		      (make-segment (list new-p (cadr pts)) info))))))))
+
   (define cut-polygon-by-sphere
     (lambda (cache A p)
       (let ((pts  (polygon-vertices p))
 	    (info (polygon-info p)))
 	    ;(cache (make-hashtable segment-hash segment-equal?)))
 
-	(if (null? pts) (make-polygon pts info)
+	(if (null? pts) (values #f #f)
 	  (let loop ((rest (cons (car pts) (reverse pts)))
 		     (q1 '())
 		     (q2 '())
@@ -126,17 +179,27 @@
   (define split-by-sphere
     (lambda (Sph P)
       (let* ((cache (make-hashtable segment-hash segment-equal?))
+
              (splitter (lambda (p)
                          (let ((orf (polygon-o-sphere 1e-4 Sph p)))
                            (cond 
-                             ((eq? orf 'intersect) (cut-polygon-by-sphere cache Sph p))
+                             ((eq? orf 'intersect)
+			      (cond
+				((polygon? p) (cut-polygon-by-sphere cache Sph p))
+				((segment? p) (cut-segment-by-sphere Sph p))
+				(else (values #f #f))))
                              ((eq? orf 'above) (values p #f))
                              ((eq? orf 'below) (values #f p))
                              (else (values #f #f))))))
   
              (build    (lambda (lst-a lst-b a b)
-	                 (let ((nla (if (and a (not (null? (polygon-vertices a)))) (cons a lst-a) lst-a))
-			       (nlb (if (and b (not (null? (polygon-vertices b)))) (cons b lst-b) lst-b)))
+	                 (let ((nla (if (and a (not (null? (polygon-vertices a)))) 
+				      (cons a lst-a) 
+				      lst-a))
+			       (nlb (if (and b (not (null? (polygon-vertices b)))) 
+				      (cons b lst-b) 
+				      lst-b)))
+
 			   (values nla nlb)))))
 
         (let loop ((ra  '())
@@ -148,5 +211,14 @@
 	    (let*-values (((a  b)  (splitter (car src)))
 	                  ((na nb) (build ra rb a b)))
 	      (loop na nb (cdr src))))))))
+
+  (define select-shell
+    (lambda (origin r1 r2)
+      (let ((S1 (make-sphere origin r1))
+	    (S2 (make-sphere origin r2)))
+	(lambda (P)
+	  (let*-values (((outside-S1 inside-S1) (split-by-sphere S1 P))
+			((outside-S2 inside-S2) (split-by-sphere S2 outside-S1)))
+	    inside-S2)))))
 )
 

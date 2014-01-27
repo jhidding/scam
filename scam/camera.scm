@@ -83,7 +83,9 @@
   
           ((hint p) (cond 
             ((a-point? p)  ((comp (projection hint) rotate translate) p))
-            ((a-vector? p) (rotate p))))))))
+            ((a-vector? p) (rotate p))
+	    ((eq? 'normal-relative hint) (a-dot (a-normalize (a-distance origin (car (polygon-points p)))) 
+						(polygon-normal p)))))))))
 
   (define parallel-projection
     (comp <- a-vector->list))

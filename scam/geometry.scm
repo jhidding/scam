@@ -7,7 +7,7 @@
    +------------------------------------------------------------------|#
 
   (export point-below-plane? distance-to-plane polygon-o-plane
-	  intersection cut-polygon clip-by-plane)
+	  intersection cut-polygon clip-by-plane cut-segment!)
 
   (import (rnrs (6))
 	  (scam lib)
@@ -62,6 +62,17 @@
 	     (v (if I I (make-vertex (apply plane-segment-intersection A (segment-points s))))))
 	(if (not I) (hashtable-set! cache s v))
 	v)))
+
+  (define cut-segment!
+    (lambda (cache A p)
+      (let ((pts  (segment-vertices p))
+	    (info (segment-info p))
+	    (v    (intersection-plane-segment! cache A p)))
+	(if (point-below-plane? A (vertex->point (cadr pts)))
+	  (values (make-segment (list (car pts) v) info)
+		  (make-segment (list v (cadr pts)) info))
+	  (values (make-segment (list v (cadr pts)) info)
+		  (make-segment (list (car pts) v) info))))))
 
   #|====================================================================
    | cut-polygon,

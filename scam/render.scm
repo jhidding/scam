@@ -1,6 +1,6 @@
 (library (scam render)
 
-  (export make-pdf-renderer make-svg-renderer
+  (export make-pdf-renderer make-svg-renderer make-image-renderer
 	  make-material-fill make-material-line make-material-linefill
 	  make-material-fill-fn make-material-linefill-fn
 	  make-material-line-fn
@@ -35,6 +35,15 @@
 	     (finish  (lambda () (cairo-surface-finish surface))))
       (make-renderer camera surface context finish))))
 
+  (define make-image-renderer
+    (lambda (camera width height filename)
+      (let* ((surface (cairo-image-surface-create 'argb32 width height))
+	     (context (cairo-create surface))
+	     (finish  (lambda ()
+			(cairo-surface-write-to-png surface filename)
+			(cairo-surface-finish surface))))
+      (make-renderer camera surface context finish))))
+    
   (define render-finish
     (lambda (R) ((renderer-finish R))))
 
@@ -112,7 +121,11 @@
     (protocol (lambda (p)
 		(lambda (C P)
 		  (cond
-		    ((polygon? P) (let* ((normal (C (polygon-normal P)))
+		    ((polygon? P) (let* ((normal (let ((normal-mode (polygon-get-info P 'normal-mode))) 
+						   (if normal-mode
+						     (C normal-mode P)
+						     (C (polygon-normal P)))))
+
 					 (points (let ((hint (polygon-get-info P 'render-hint)))
 					           (if hint
 					             (map (comp (lambda (x y z) (list z x y)) (lambda (p) (C hint p)))
@@ -125,8 +138,15 @@
 				      (begin (display "# weird error!\n") (p 0 '() id))
 				      (p (apply max (map car points)) (map cdr points) #t material))))
 
-		    ((segment? P) (let* ((points (map (comp (lambda (x y z) (list z x y)) C)
-						      (segment-points P)))
+		    ((segment? P) (let* (
+					 ;(points (map (comp (lambda (x y z) (list z x y)) C)
+					 ;	      (segment-points P)))
+					 (points (let ((hint (polygon-get-info P 'render-hint)))
+					           (if hint
+					             (map (comp (lambda (x y z) (list z x y)) (lambda (p) (C hint p)))
+						            (segment-points P))
+					             (map (comp (lambda (x y z) (list z x y)) (lambda (p) (C p))) 
+						            (segment-points P)))))
 					 (normal (:> 0 0 0)) ;((comp C a-distance) <- (segment-points P)))
 					 (material ((segment-material P) (caar points) normal)))
 				    (if (null? points)

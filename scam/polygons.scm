@@ -3,7 +3,7 @@
   (export make-vertex vertex? point->vertex vertex->point
 	  make-plane plane? points->plane plane-origin plane-normal
 	  make-segment segment? segment-points segment-add-material segment-material
-	  segment-hash segment-equal? segment-info
+	  segment-hash segment-equal? segment-info segment-vertices segment-set-info!
 	  polygon-add-material polygon-material polygon-plane
 	  make-polygon polygon? polygon-points polygon-vertices polygon-info
 	  make-locus locus->point locus-material locus-add-material locus?
@@ -132,6 +132,12 @@
 
   (define segment-info
     (lambda (p) (n-cell-info p)))
+
+  (define segment-set-info!
+    (lambda (p key value)
+      (n-cell-i-set! p (append (remp (comp ($ eq? key) car) (segment-info p))
+                               (list (cons key value))))
+      p))
 
   (define segment-add-material
     (lambda (p m)

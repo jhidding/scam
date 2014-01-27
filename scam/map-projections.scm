@@ -61,12 +61,20 @@
              (plane-180     (make-plane origin (a-distance target origin)))
   
              (back?         (comp not ($ eq? 'below) ($ polygon-o-plane 1e-4 plane-180)))
-  
+	     (cutter        (lambda (p)
+			      (if (polygon? p) 
+				(cut-polygon cache plane-cut p)
+				(cut-segment! cache plane-cut p))))
+	     (set-hint!     (lambda (p s)
+			      (if (polygon? p)
+				(polygon-set-info! p 'render-hint s)
+				(segment-set-info! p 'render-hint s))))
+
              (splitter (lambda (p)
                          (if (back? p)
                            (let ((orf (polygon-o-plane 1e-4 plane-cut p)))
                              (cond 
-                               ((eq? orf 'intersect) (cut-polygon cache plane-cut p))
+                               ((eq? orf 'intersect) (cutter p))
                                ((eq? orf 'below) (values p #f))
                                ((eq? orf 'above) (values #f p))
                                (else (values #f #f))))
@@ -75,10 +83,10 @@
   
              (build    (lambda (lst a b)
                          (cond
-                           ((and b a) (cons* (polygon-set-info! a 'render-hint 'right) 
-                                             (polygon-set-info! b 'render-hint 'left)  lst))
-                           (b         (cons  (polygon-set-info! b 'render-hint 'left)  lst))
-                           (a         (cons  (polygon-set-info! a 'render-hint 'right) lst))
+                           ((and b a) (cons* (set-hint! a 'right) 
+                                             (set-hint! b 'left)  lst))
+                           (b         (cons  (set-hint! b 'left)  lst))
+                           (a         (cons  (set-hint! a 'right) lst))
                            (else      lst)))))
   
         (let loop ((result '())
