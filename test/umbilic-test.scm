@@ -71,7 +71,7 @@
 			    ;(weak-perspective-projection 4.0)))
 
        (L 600)
-       (R (make-svg-renderer C L L "umbilic.svg")))
+       (R (make-pdf-renderer C L L "umbilic.pdf")))
 
   (render-scale R (* 0.38 L) (* 0.38 L))
   (render-translate R 1.32 1.32)

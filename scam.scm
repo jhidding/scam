@@ -35,7 +35,7 @@
     parametric-closed-triangle-mesh parametric-open-triangle-mesh
     
     ; render
-    make-pdf-renderer make-svg-renderer
+    make-pdf-renderer make-svg-renderer make-image-renderer
     make-material-fill make-material-linefill make-material-line
     make-material-fill-fn make-material-linefill-fn make-material-line-fn
     render-scale render-translate render-scene render-finish render-do

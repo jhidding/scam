@@ -3,6 +3,7 @@
 	(cairo)
 	(scam)
 	(scam vectors)
+	(scam polygons)
 	(scam map-projections))
 
 (define turn 6.2831853071795862)
@@ -10,6 +11,17 @@
 (define lin-space-excl
   (lambda (a b n)
     (map (comp ($ + a) ($ * (/ (- b a) n))) (range n))))
+
+(define (torus-fn r1 r2)
+  (lambda (u v)
+    (:. (* (+ r1 (* r2 (cos v))) (cos u))
+	(* (+ r1 (* r2 (cos v))) (sin u))
+	(* r2 (sin v)))))
+
+(define (solid-torus r1 r2 n1 n2)
+  (let ((theta 	(lin-space-excl 0 turn n1))
+	(phi 	(lin-space-excl 0 turn n2)))
+    (parametric-closed-triangle-mesh (torus-fn r1 r2) theta phi)))
 
 (define circle
   (lambda (radius period phase)
@@ -50,13 +62,14 @@
 	(phi 	(lin-space 0 1 n2)))
     (parametric-open-triangle-mesh (zeeman-umbilic r1 r2) theta phi)))
 
-(let* ((T (solid-umbilic 1 0.7 41 37))
+(let* ((T (solid-torus 1 0.5 41 37))
 
        (M1 (make-material-linefill-fn
 	     (lambda (z normal set-colour set-lw fill stroke)
-	       (let* ((c (colour-hsv-gradient (make-colour 'hsva 0.0 0.8 0.8 0.6)
-				     	      (make-colour 'hsva 0.5 0.7 0.5 0.6)))
-		      (r (/ z 1.7))
+	       (let* ((c (colour-hsv-gradient (make-colour 'hsva 0.0 0.8 0.8 0.8)
+				     	      (make-colour 'hsva 0.2 0.7 0.5 0.3)))
+		      (r (/ (+ 1 normal) 2))
+		      (r (abs normal))
 		      (black (make-colour 'rgb 0 0 0)))
 		 (set-colour (c r)) (fill) (set-lw (inexact (/ 0.003 z)))
 		 (set-colour black) 
@@ -66,7 +79,8 @@
        (cp (make-plane (:. 0 0 0) (a-cross (:> 1.0 0.0 1.0) (:> 0 1.0 0))))
        (P2 (split-by-half-plane (:. 0 0 0) (:. 0 1.0 0) (:> 1.0 0.0 1.0) T))
 
-       (P (map ($ polygon-add-material -- M1) P2))
+       (P (map (comp ($ polygon-set-info! -- 'normal-mode 'normal-relative) 
+		     ($ polygon-add-material -- M1)) P2))
 
        (C (camera-transform (:.  0 0 0)  	 ; position
 			    (:.   0 1.0 0) 	 ; target
