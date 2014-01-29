@@ -1,7 +1,10 @@
 #pragma once
+#include <unordered_map>
+#include <utility>
 #include "../base/common.hh"
 #include "point.hh"
 #include "vector.hh"
+#include "polygon.hh"
 
 namespace Scam
 {
@@ -13,8 +16,12 @@ namespace Scam
 
 			bool is_below(Point const &a) const;
 
-			std::pair<Maybe<Point>, Maybe<Point>> split_polygon(
-				ptr<std::map<Segment,Point>> cache, Polygon const &p) const;
+			std::pair<Maybe<Polygon>, Maybe<Polygon>> split_polygon(
+				ptr<Polygon> p) const;
+			std::pair<Maybe<Polygon>, Maybe<Polygon>> split_polygon(
+				ptr<std::unordered_map<Segment,Vertex>> cache, ptr<Polygon> p) const;
+
+		private:
 	};
 
 	class Plane: public Surface

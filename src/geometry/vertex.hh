@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <iostream>
 
 #include "point.hh"
 #include "vector.hh"
@@ -16,6 +17,8 @@ namespace Scam
 		Point  p;
 
 		public:
+			Vertex() {}
+
 			Vertex(Point const &p_):
 				id(count++), p(p_) {}
 
@@ -30,11 +33,16 @@ namespace Scam
 			}
 
 			// in effect a Vertex can be treated as a Point
-			operator Point const &() 
+			operator Point() const
 			{ 
 				return p; 
 			}
 	};
+
+	inline std::ostream &operator<<(std::ostream &out, Vertex const &v)
+	{
+		return out << static_cast<Point>(v);
+	}
 }
 
 namespace std

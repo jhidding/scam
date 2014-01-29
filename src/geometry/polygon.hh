@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 
+#include "../base/common.hh"
 #include "point.hh"
 #include "vector.hh"
 #include "vertex.hh"
@@ -21,26 +22,45 @@ namespace Scam
 		size_t compute_hash() const;
 
 		public:
-			template <typename Range>
-			Polygon(Range R):
-				m_vert(new std::vector<Vertex>(R.cbegin(), R.cend()))
+			using const_iterator = std::vector<Vertex>::const_iterator;
+
+			Polygon(ptr<std::vector<Vertex>> V):
+				m_vert(V)
 			{
 				m_hash = compute_hash();
 			}
 
-			std::vector<Vertex> const &vertices() const
+			template <typename Iter>
+			Polygon(Iter a, Iter b):
+				m_vert(new std::vector<Vertex>(a, b))
+			{
+				m_hash = compute_hash();
+			}
+
+
+			ptr<std::vector<Vertex>> const &vertices() const
 			{
 				return m_vert;
 			}
 
 			size_t size() const 
 			{ 
-				return m_vert.size(); 
+				return m_vert->size(); 
 			}
 
 			bool empty() const
 			{
-				return m_vert.empty();
+				return m_vert->empty();
+			}
+
+			const_iterator begin() const
+			{
+				return m_vert->begin();
+			}
+
+			const_iterator end() const
+			{
+				return m_vert->end();
 			}
 	};
 
@@ -52,21 +72,10 @@ namespace Scam
 		std::map<std::string, std::string> 	m_info;
 
 		public:
-			Segment(Vertex const &a_, Vertex const &b_)
-			{
-				if (a_ < b_) 
-				{
-					m_a = a_;
-					m_b = b_;
-				}
-				else
-				{
-					m_a = b_;
-					m_b = a_;
-				}
-
-				compute_hash();
-			}
+			Segment(Vertex const &a_, Vertex const &b_):
+				m_a(std::min(a_, b_)),
+				m_b(std::max(a_, b_))
+			{}
 
 			Vertex const &first() const
 			{ 
@@ -78,7 +87,7 @@ namespace Scam
 				return m_b;
 			}
 
-			bool operator==(Segment const &o)
+			bool operator==(Segment const &o) const
 			{
 				return m_a == o.m_a and m_b == o.m_b;
 			}
@@ -107,9 +116,9 @@ namespace std
 		
 		size_t operator()(Scam::Segment const &v) const
 		{
-			return hash<Point>()(v.first()) * 1024 + 
-				hash<Point>()(v.second());
+			return hash<Scam::Vertex>()(v.first()) * 1024 + 
+			       hash<Scam::Vertex>()(v.second());
 		}
-	}
+	};
 }
 

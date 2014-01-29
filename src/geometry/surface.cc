@@ -48,27 +48,16 @@ bool Surface::is_below(Point const &a) const
 	return distance(a) < 0;
 }
 
-template <typename at, typename rt>
-rt cache_or_compute(ptr<std::unordered_map<at, rt>> cache, std::function<rt (at const &)> f, at const &a)
+template <typename F1, typename F2>
+std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
+	F1 splitter, F2 is_below, ptr<Polygon> P)
 {
-	auto k = cache->find(a);
-	if (k != cache->end()) return *k;
-
-	rt q = f(a);
-	(*cache)[a] = q;
-
-	return q;
-}
-
-std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
-	ptr<std::unordered_map<Segment,Point>> cache, ptr<Polygon> P) const
-{
-	using return_type = std::pair<Maybe<Point>,Maybe<Point>>;
+	using return_type = std::pair<Maybe<Polygon>,Maybe<Polygon>>;
 
 	if (P->empty()) return return_type(Nothing, Nothing);
 
 	std::vector<Vertex> V; 
-	std::copy(P->vertices()->begin(), P->vertices->end(), std::back_inserter(V));
+	std::copy(P->vertices()->begin(), P->vertices()->end(), std::back_inserter(V));
 	V.push_back(V.front());
 
 	ptr<std::vector<Vertex>> Q1(new std::vector<Vertex>), 
@@ -82,24 +71,20 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
 	{
 		if (below != is_below(*j))
 		{
-			auto q = cache_or_compute<Segment, Point>(cache, [] (Segment const &s) 
-			{ 
-				return intersect(s.first(), s.second()); 
-			}, Segment(*i, *j));
+			Maybe<Vertex> q(splitter(Segment(*i, *j)));
 
 			if (q)
 			{
 				split = true;
-				Vertex n(*q);
-				Q1->push_back(n);
-				Q2->push_back(n);
+				Q1->push_back(*q);
+				Q2->push_back(*q);
 				std::swap(Q1, Q2);
+				below = not below;
 			}
 		}
 		else
 		{
-			Q1->push_back(*j);
-			
+			Q1->push_back(*j);	
 			++i; ++j;
 		}
 	}
@@ -116,5 +101,51 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
 		return return_type(Just(Polygon(Q1)), Just(Polygon(Q2)));
 	else
 		return return_type(Just(Polygon(Q2)), Just(Polygon(Q1)));
+}
+
+
+std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
+	ptr<Polygon> P) const
+{
+	return _split_polygon(
+		[this] (Segment const &s) -> Maybe<Vertex>
+		{
+			Maybe<Point> p = this->intersect(s.first(), s.second());
+			if (p)
+				return Just(Vertex(*p));
+			else
+				return Nothing;
+		},
+
+		[this] (Point const &p)
+		{
+			return this->is_below(p);
+		}, P);
+}
+
+std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
+	ptr<std::unordered_map<Segment,Vertex>> cache, ptr<Polygon> P) const
+{
+	return _split_polygon(
+		[this, cache] (Segment const &s) -> Maybe<Vertex>
+		{
+			if (cache->count(s) > 0)
+				return Just((*cache)[s]);
+
+			Maybe<Point> q = this->intersect(s.first(), s.second());
+			if (q)
+			{
+				Vertex v(*q);
+				(*cache)[s] = v;
+				return Just(v);
+			}
+
+			return Maybe<Vertex>();
+		}, 
+
+		[this] (Point const &p)
+		{
+			return this->is_below(p);
+		}, P);
 }
 

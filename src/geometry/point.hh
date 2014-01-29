@@ -19,17 +19,21 @@ namespace Scam
 				X[0] = x_; X[1] = y_; X[2] = z_;
 			}
 
+			Point_() {}
+
 			template <typename Iter>
 			Point_(Iter a, Iter b)
 			{
 				std::copy(a, b, X.begin());
 			}
 
+			/*
 			template <typename Range>
 			Point_(Range const &R)
 			{
 				std::copy(R.cbegin(), R.cend(), X.begin());
-			}
+			}*/
+
 
 			// accessors
 			T x() const { return X[0]; }
