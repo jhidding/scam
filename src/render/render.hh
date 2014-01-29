@@ -6,38 +6,48 @@ namespace Scam
 {
 	using Context = Cairo::RefPtr<Cairo::Context>;
 	using Material = std::function<std::function<void (Context)>(Plane const &)>;
-
-	class Collection
-	{
-		std::vector<ptr<Polygon>> 	P;
-		ptr<Material>			M;
-
-		public:
-	};
+	using Path = std::vector<Point>;
 
 	class Drawable
 	{
-		ptr<Polygon> 	P;
+		Path 		G;
+		Plane		P;
 		Material	M;
 
 		public:
+			Drawable(Camera const &C, Polygon const &P_, Material const &M_):
+				P(P_.plane()), M(M_)
+			{
+				std::transform(P_.begin(), P_.end(),
+					std::back_inserter(G), C);
+			}
+
 			void apply(Context cx)
 			{
-				Point  p = head(*P);
+				Point  p = head(*G);
 				cx->move_to(p.x(), p.y());
 
-				for (Point const &p : tail(*P))
+				for (Point const &p : tail(*G))
 					cx->line_to(p.x(), p.y());
 
 				cx->close_path();
 
-				(*M)(P->plane()).apply(cx);
+				M(P)(cx);
 			}
 
 			bool operator<(Drawable const &o) const
 			{
 				return head(*P).z() < head(*o.P).z();
 			}
+	};
+
+	class Collection
+	{
+		std::vector<ptr<Polygon>>	P;
+		ptr<Material>			M;
+
+		public:
+			
 	};
 
 	class Scene

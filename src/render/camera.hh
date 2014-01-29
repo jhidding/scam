@@ -47,6 +47,8 @@ namespace Scam
 
 			Vector rotate(Vector const &v) const { return R(v); }
 			Point  project(Point const &p) const { return P(R(T(p))); }
+
+			Point operator()(Point const &p) const { return project(p); }
 	};
 
 	Point parallel_projection(Vector const &v)
