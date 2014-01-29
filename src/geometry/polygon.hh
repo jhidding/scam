@@ -16,6 +16,7 @@ namespace Scam
 		friend std::hash<Polygon>;
 
 		ptr<std::vector<Vertex>>	   m_vert;
+		Plane				   m_plane;
 		std::map<std::string, std::string> m_info;
 		size_t				   m_hash;
 
@@ -28,6 +29,9 @@ namespace Scam
 				m_vert(V)
 			{
 				m_hash = compute_hash();
+				m_plane = Plane((*V)[1], Vector::Cross(
+					(*V)[2] - (*V)[1], 
+					(*V)[0] - (*V)[1]));
 			}
 
 			template <typename Iter>
@@ -35,12 +39,25 @@ namespace Scam
 				m_vert(new std::vector<Vertex>(a, b))
 			{
 				m_hash = compute_hash();
+				m_plane = Plane((*m_vert)[1], Vector::Cross(
+					(*m_vert)[2] - (*m_vert)[1], 
+					(*m_vert)[0] - (*m_vert)[1]));
 			}
 
+			Polygon(ptr<std::vector<Vertex>> V, Plane const &P):
+				m_vert(V), m_plane(P)
+			{
+				m_hash = compute_hash();
+			}
 
-			ptr<std::vector<Vertex>> const &vertices() const
+			ptr<std::vector<Vertex>> vertices() const
 			{
 				return m_vert;
+			}
+
+			Plane const &plane() const
+			{
+				return m_plane;
 			}
 
 			size_t size() const 
