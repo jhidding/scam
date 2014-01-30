@@ -41,5 +41,29 @@ Test::Unit _test_Maybe(
 	return b and not a;
 });
 
+Test::Unit _test_flatmap(
+	"001", "Flatmap on arrays.",
+	[] ()
+{
+	Array<int> j({1, 2, 3}),
+		   answer({0, 0, 1, 0, 1, 2});
+
+	auto a = flatmap([] (int x) -> Array<int>
+	{
+		Array<int> b;
+		for (int i = 0; i < x; ++i)
+			b.push_back(i);
+		return b;
+	}, j);
+	
+	for_each([] (int i)
+	{
+		std::cout << i << " ";
+	}, a);
+	std::cout << std::endl;
+
+	return std::equal(a.begin(), a.end(), answer.begin());
+});
+
 #endif
 

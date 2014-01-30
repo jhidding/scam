@@ -36,12 +36,12 @@ Test::Unit _test_Splitting(
 	[] ()
 {
 	double P[4][3] = {{0,0,0}, {1,0,0}, {1,1,0}, {0,1,0}};
-	auto V = make_ptr<std::vector<Vertex>>();
+	auto V = Array<Vertex>();
 	for (double *a : P)
 	{
-		V->push_back(Vertex(Point(a, a+3)));
+		V.push_back(Vertex(Point(a, a+3)));
 	}
-	auto  square = make_ptr<Polygon>(V);
+	auto  square = Polygon(V);
 
 	Sphere S1(Point(0.0, 0.2, 0.2), 1.0);
 	Plane  P1(Point(0.75, 0.75, 0.5), Vector(1, 1, 0).normalize());

@@ -17,8 +17,12 @@
 
 target="scam"
 objdir="obj"
-LDFLAGS="-lm -lrt -lfftw3 -lgsl -lgslcblas -lCGAL -lgmp -lboost_thread -lmpfr -fopenmp"
-CFLAGS="-g -std=c++0x -O2 -frounding-math -fopenmp -I/mnt/Prei/local/include"
+
+CAIRO_LDFLAGS=$(pkg-config --libs cairomm-1.0)
+CAIRO_CFLAGS=$(pkg-config --cflags cairomm-1.0)
+
+LDFLAGS="-lm -lrt -lfftw3 -lgsl -lgslcblas -lCGAL -lgmp -lboost_thread -lmpfr -fopenmp ${CAIRO_LDFLAGS}"
+CFLAGS="-g -std=c++0x -O2 -frounding-math -fopenmp -I/mnt/Prei/local/include ${CAIRO_CFLAGS}"
 
 CC="g++"
 ext=".cc"

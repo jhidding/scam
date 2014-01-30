@@ -4,10 +4,13 @@
 #include "../base/common.hh"
 #include "point.hh"
 #include "vector.hh"
-#include "polygon.hh"
+#include "vertex.hh"
 
 namespace Scam
 {
+	class Polygon;
+	class Segment;
+
 	class Surface
 	{
 		public:
@@ -17,9 +20,9 @@ namespace Scam
 			bool is_below(Point const &a) const;
 
 			std::pair<Maybe<Polygon>, Maybe<Polygon>> split_polygon(
-				ptr<Polygon> p) const;
+				Polygon const &p) const;
 			std::pair<Maybe<Polygon>, Maybe<Polygon>> split_polygon(
-				ptr<std::unordered_map<Segment,Vertex>> cache, ptr<Polygon> p) const;
+				ptr<std::unordered_map<Segment,Vertex>> cache, Polygon const &p) const;
 
 		private:
 	};
@@ -30,6 +33,8 @@ namespace Scam
 		Vector	m_normal;
 
 		public:
+			Plane() {}
+
 			Plane(Point origin_, Vector normal_):
 				m_origin(origin_), m_normal(normal_)
 			{}

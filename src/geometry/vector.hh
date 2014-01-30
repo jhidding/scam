@@ -13,6 +13,8 @@ namespace Scam
 
 		public:
 			// constructors
+			Vector_() {}
+
 			Vector_(T x_, T y_, T z_)
 			{
 				X[0] = x_; X[1] = y_; X[2] = z_;
@@ -48,7 +50,8 @@ namespace Scam
 			// products
 			static T dot(Vector_ const &a, Vector_ const &b)
 			{
-				return std::inner_product(a.cbegin(), a.cend(), b.cbegin(), T(0));
+				return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
+				//return std::inner_product(a.cbegin(), a.cend(), b.cbegin(), T(0));
 			}
 
 			static Vector_ cross(Vector_ const &a, Vector_ const &b)
@@ -62,7 +65,8 @@ namespace Scam
 			// methods
 			T sqr() const
 			{
-				return std::inner_product(cbegin(), cend(), cbegin(), T(0));
+				return dot(*this, *this);
+				//return std::inner_product(cbegin(), cend(), cbegin(), T(0));
 			}
 
 			T norm() const

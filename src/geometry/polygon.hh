@@ -8,6 +8,7 @@
 #include "point.hh"
 #include "vector.hh"
 #include "vertex.hh"
+#include "surface.hh"
 
 namespace Scam
 {
@@ -15,7 +16,7 @@ namespace Scam
 	{
 		friend std::hash<Polygon>;
 
-		ptr<std::vector<Vertex>>	   m_vert;
+		Array<Vertex>			   m_vert;
 		Plane				   m_plane;
 		std::map<std::string, std::string> m_info;
 		size_t				   m_hash;
@@ -23,34 +24,36 @@ namespace Scam
 		size_t compute_hash() const;
 
 		public:
-			using const_iterator = std::vector<Vertex>::const_iterator;
+			using const_iterator = Array<Vertex>::const_iterator;
 
-			Polygon(ptr<std::vector<Vertex>> V):
+			Polygon() {}
+
+			Polygon(Array<Vertex> V):
 				m_vert(V)
 			{
 				m_hash = compute_hash();
-				m_plane = Plane((*V)[1], Vector::Cross(
+				m_plane = Plane((*V)[1], Vector::cross(
 					(*V)[2] - (*V)[1], 
-					(*V)[0] - (*V)[1]));
+					(*V)[0] - (*V)[1]).normalize());
 			}
 
 			template <typename Iter>
 			Polygon(Iter a, Iter b):
-				m_vert(new std::vector<Vertex>(a, b))
+				m_vert(Array<Vertex>(a, b))
 			{
 				m_hash = compute_hash();
-				m_plane = Plane((*m_vert)[1], Vector::Cross(
+				m_plane = Plane((*m_vert)[1], Vector::cross(
 					(*m_vert)[2] - (*m_vert)[1], 
-					(*m_vert)[0] - (*m_vert)[1]));
+					(*m_vert)[0] - (*m_vert)[1]).normalize());
 			}
 
-			Polygon(ptr<std::vector<Vertex>> V, Plane const &P):
+			Polygon(Array<Vertex> V, Plane const &P):
 				m_vert(V), m_plane(P)
 			{
 				m_hash = compute_hash();
 			}
 
-			ptr<std::vector<Vertex>> vertices() const
+			Array<Vertex> vertices() const
 			{
 				return m_vert;
 			}
@@ -62,22 +65,22 @@ namespace Scam
 
 			size_t size() const 
 			{ 
-				return m_vert->size(); 
+				return m_vert.size(); 
 			}
 
 			bool empty() const
 			{
-				return m_vert->empty();
+				return m_vert.empty();
 			}
 
 			const_iterator begin() const
 			{
-				return m_vert->begin();
+				return m_vert.begin();
 			}
 
 			const_iterator end() const
 			{
-				return m_vert->end();
+				return m_vert.end();
 			}
 	};
 

@@ -1,12 +1,18 @@
 #pragma once
 
 #include <cairomm/cairomm.h>
+#include <algorithm>
+#include <vector>
+
+#include "../base/common.hh"
+#include "../base/map.hh"
+#include "camera.hh"
 
 namespace Scam
 {
 	using Context = Cairo::RefPtr<Cairo::Context>;
-	using Material = std::function<std::function<void (Context)>(Plane const &)>;
-	using Path = std::vector<Point>;
+	using Material = std::function<void (Plane const &, Context)>;
+	using Path = Array<Point>;
 
 	class Drawable
 	{
@@ -14,47 +20,65 @@ namespace Scam
 		Plane		P;
 		Material	M;
 
+		bool		closed;
+		double		z;
+
 		public:
-			Drawable(Camera const &C, Polygon const &P_, Material const &M_):
-				P(P_.plane()), M(M_)
+			Drawable() {}
+
+			Drawable(Polygon const &P_, Material const &M_, Camera const &C):
+				P(C(P_.plane())), M(M_), closed(true)
 			{
 				std::transform(P_.begin(), P_.end(),
 					std::back_inserter(G), C);
+
+				auto z_values = lazy_map(G, [] (Point const &x) { return x.z(); });
+				z = *std::max_element(z_values.begin(), z_values.end());
 			}
 
-			void apply(Context cx)
+			void operator()(Context cx) const
 			{
-				Point  p = head(*G);
+				cx->save();
+
+				Point  p = head(G);
 				cx->move_to(p.x(), p.y());
 
-				for (Point const &p : tail(*G))
+				for (Point const &p : tail(G))
 					cx->line_to(p.x(), p.y());
 
-				cx->close_path();
+				if (closed)
+					cx->close_path();
 
-				M(P)(cx);
+				M(P, cx);
+
+				cx->restore();
 			}
 
 			bool operator<(Drawable const &o) const
 			{
-				return head(*P).z() < head(*o.P).z();
+				return z > o.z;
 			}
 	};
 
-	class Collection
+	class RenderObject
 	{
-		std::vector<ptr<Polygon>>	P;
-		ptr<Material>			M;
+		Array<Polygon>	P;
+		Material	M;
 
 		public:
-			
-	};
+			RenderObject() {}
 
-	class Scene
-	{
-		std::vector<ptr<Collection>>	C;
+			RenderObject(Array<Polygon> P_, Material const &M_):
+				P(P_), M(M_)
+			{}
 
-		public:
+			Array<Drawable> operator()(Camera const &C) const
+			{
+				Array<Drawable> D;
+				for (Polygon const &p : P)
+					D.push_back(Drawable(p, M, C));
+				return D;
+			}
 	};
 
 	class Renderer
@@ -72,7 +96,7 @@ namespace Scam
 		public:
 			static ptr<Renderer> SVG(double width, double height, std::string const &filename)
 			{
-				return make_ptr<Renderer>(Cairo::SvgSurface::create(filename, width, height));
+				return ptr<Renderer>(new Renderer(Cairo::SvgSurface::create(filename, width, height)));
 			}
 
 			void finish()
@@ -80,14 +104,16 @@ namespace Scam
 				m_surface->finish();	
 			}
 
-			void operator()(std::function<void (Cairo::RefPtr<Cairo::Context>)> f)
+			void apply(std::function<void (Context)> f)
 			{
 				f(m_context);
 			}
 
-			void render(Camera const &C, Scene const &S)
+			void render(Array<RenderObject> Scene, Camera const &C)
 			{
-
+				auto drawables = flatmap([&C] (RenderObject const &r) { return r(C); }, Scene);
+				sort(drawables);
+				for_each([this] (Drawable const &d) { return d(m_context); }, drawables);
 			}
 	};
 }

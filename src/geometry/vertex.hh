@@ -7,20 +7,20 @@
 
 namespace Scam
 {
-	class Vertex
+	class Vertex: public Point
 	{
 		friend std::hash<Vertex>;
 
 		static size_t count;
 
 		size_t id;
-		Point  p;
+		//Point  p;
 
 		public:
 			Vertex() {}
 
 			Vertex(Point const &p_):
-				id(count++), p(p_) {}
+				Point(p_), id(count++) {}
 
 			bool operator==(Vertex const &o) const
 			{
@@ -32,11 +32,11 @@ namespace Scam
 				return id < o.id;
 			}
 
-			// in effect a Vertex can be treated as a Point
+			/* in effect a Vertex can be treated as a Point
 			operator Point() const
 			{ 
 				return p; 
-			}
+			}*/
 	};
 
 	inline std::ostream &operator<<(std::ostream &out, Vertex const &v)

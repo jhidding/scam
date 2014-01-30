@@ -27,7 +27,14 @@ namespace Scam
 
 			static Quat_ rotation(Vector_<T> const &u, T theta)
 			{
-				return Quat_(cos(theta/2), u.scale(sin(theta/2)));
+				Vector v = u.scale(sin(theta/2));
+				double w = sqrt(1 - v.sqr());
+				return Quat_(w, v); 
+
+				// apparently cos and sin have such round-off error that
+				// return Quat_(cos(theta/2), u.scale(sin(theta/2)));
+				// results in non-unit quaternions, explicitly computing
+				// the scalar part solves this issue
 			}
 
 			static Quat_ scalar(T s_)

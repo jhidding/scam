@@ -1,4 +1,5 @@
 #include "surface.hh"
+#include "polygon.hh"
 
 using namespace Scam;
 
@@ -50,18 +51,17 @@ bool Surface::is_below(Point const &a) const
 
 template <typename F1, typename F2>
 std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
-	F1 splitter, F2 is_below, ptr<Polygon> P)
+	F1 splitter, F2 is_below, Polygon const &P)
 {
 	using return_type = std::pair<Maybe<Polygon>,Maybe<Polygon>>;
 
-	if (P->empty()) return return_type(Nothing, Nothing);
+	if (P.empty()) return return_type(Nothing, Nothing);
 
 	std::vector<Vertex> V; 
-	std::copy(P->vertices()->begin(), P->vertices()->end(), std::back_inserter(V));
+	std::copy(P.vertices().begin(), P.vertices().end(), std::back_inserter(V));
 	V.push_back(V.front());
 
-	ptr<std::vector<Vertex>> Q1(new std::vector<Vertex>), 
-				 Q2(new std::vector<Vertex>);
+	Array<Vertex> Q1, Q2;
 
 	auto i = V.begin();
 	auto j = i; ++j;
@@ -76,15 +76,15 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
 			if (q)
 			{
 				split = true;
-				Q1->push_back(*q);
-				Q2->push_back(*q);
+				Q1.push_back(*q);
+				Q2.push_back(*q);
 				std::swap(Q1, Q2);
 				below = not below;
 			}
 		}
 		else
 		{
-			Q1->push_back(*j);	
+			Q1.push_back(*j);	
 			++i; ++j;
 		}
 	}
@@ -105,7 +105,7 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
 
 
 std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
-	ptr<Polygon> P) const
+	Polygon const &P) const
 {
 	return _split_polygon(
 		[this] (Segment const &s) -> Maybe<Vertex>
@@ -124,7 +124,7 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
 }
 
 std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
-	ptr<std::unordered_map<Segment,Vertex>> cache, ptr<Polygon> P) const
+	ptr<std::unordered_map<Segment,Vertex>> cache, Polygon const &P) const
 {
 	return _split_polygon(
 		[this, cache] (Segment const &s) -> Maybe<Vertex>

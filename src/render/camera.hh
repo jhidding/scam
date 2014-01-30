@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include "../geometry/geometry.hh"
 
 namespace Scam
@@ -49,6 +50,8 @@ namespace Scam
 			Point  project(Point const &p) const { return P(R(T(p))); }
 
 			Point operator()(Point const &p) const { return project(p); }
+			Vector operator()(Vector const &v) const { return rotate(v); }
+			Plane operator()(Plane const &p) const { return Plane(project(p.origin()), rotate(p.normal())); }
 	};
 
 	Point parallel_projection(Vector const &v)
