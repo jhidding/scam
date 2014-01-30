@@ -235,6 +235,13 @@ namespace Scam
 		std::transform(a.begin(), a.end(), std::back_inserter(c), f);
 		return c;
 	}
+
+	template <typename T>
+	typename T::value_type product(T const &A)
+	{
+		return std::accumulate(A.begin(), A.end(), (typename T::value_type)(1), 
+				std::multiplies<typename T::value_type>());
+	}	
 }
 
 /*!
