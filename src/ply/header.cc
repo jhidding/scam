@@ -32,3 +32,23 @@ std::ostream &PLY::operator<<(std::ostream &out, PLY::Header const &header)
 	return out;
 }
 
+std::map<std::string, std::function<ptr<Property> (std::string const &)>> make_scalar_type = {
+	{ "char", 	[] (std::string const &name) { return make_ptr<scalar_type<int8_t>>(name); } },
+	{ "uchar",	[] (std::string const &name) { return make_ptr<scalar_type<uint8_t>>(name); } },
+	{ "short",	[] (std::string const &name) { return make_ptr<scalar_type<int16_t>>(name); } },
+	{ "ushort", 	[] (std::string const &name) { return make_ptr<scalar_type<uint16_t>>(name); } },
+	{ "int", 	[] (std::string const &name) { return make_ptr<scalar_type<int32_t>>(name); } },
+	{ "uint", 	[] (std::string const &name) { return make_ptr<scalar_type<uint32_t>>(name); } },
+	{ "float", 	[] (std::string const &name) { return make_ptr<scalar_type<float>>(name); } },
+	{ "double", 	[] (std::string const &name) { return make_ptr<scalar_type<double>>(name); } } };
+
+std::map<std::string, std::function<ptr<Property> (std::string const &)>> make_list_type = {
+	{ "char", 	[] (std::string const &name) { return make_ptr<list_type<int8_t>>(name); } },
+	{ "uchar",	[] (std::string const &name) { return make_ptr<list_type<uint8_t>>(name); } },
+	{ "short",	[] (std::string const &name) { return make_ptr<list_type<int16_t>>(name); } },
+	{ "ushort", 	[] (std::string const &name) { return make_ptr<list_type<uint16_t>>(name); } },
+	{ "int", 	[] (std::string const &name) { return make_ptr<list_type<int32_t>>(name); } },
+	{ "uint", 	[] (std::string const &name) { return make_ptr<list_type<uint32_t>>(name); } },
+	{ "float", 	[] (std::string const &name) { return make_ptr<list_type<float>>(name); } },
+	{ "double", 	[] (std::string const &name) { return make_ptr<list_type<double>>(name); } } };
+

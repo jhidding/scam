@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 
 #include "base.hh"
 
@@ -36,7 +37,12 @@ namespace PLY
 				std::vector<ptr<Property>> 	m_properties;
 
 				public:
-					Element(std::string const &name_): m_name(name_), m_count(0) {}
+					Element(std::string const &name_): 
+						m_name(name_), m_count(0) {}
+
+					Element(std::string const &name_, size_t count_):
+						m_name(name_), m_count(count_) {}
+
 					std::string const &name() const { return m_name; }
 					size_t count() const { return m_count; }
 
@@ -84,6 +90,11 @@ namespace PLY
 			void add_element(std::string const &name)
 			{
 				m_elements.push_back(ptr<Element>(new Element(name)));
+			}
+
+			void add_element(std::string const &name, size_t n)
+			{
+				m_elements.push_back(ptr<Element>(new Element(name, n)));
 			}
 
 			void add_property(Property const &property)
@@ -134,9 +145,12 @@ namespace PLY
 	Header::Scalar<T> scalar_type(std::string const &name)
 	{ return Header::Scalar<T>(name); }
 
-	template <typename T>
-	Header::List<T> list_type(std::string const &name)
-	{ return Header::List<T>(name); }
+	template <typename T, typename length_type = uint8_t>
+	Header::List<T, length_type> list_type(std::string const &name)
+	{ return Header::List<T, length_type>(name); }
+
+	extern std::map<std::string, std::function<ptr<Property> (std::string const &name)>> make_scalar_type;
+	extern std::map<std::string, std::function<ptr<Property> (std::string const &name)>> make_list_type;
 
 	extern std::ostream &operator<<(std::ostream &out, PLY::Property const &property);
 	extern std::ostream &operator<<(std::ostream &out, PLY::Header::Element const &element);

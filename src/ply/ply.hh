@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <typeinfo>
+#include <stdexcept>
 
 #include "base.hh"
 #include "header.hh"
@@ -15,6 +16,8 @@ namespace PLY
 {
 	class PLY
 	{
+		friend std::shared_ptr<PLY> read(std::string const &) throw (std::exception);
+
 		private:
 			Header 			m_header;
 			Data			m_data;
@@ -25,6 +28,11 @@ namespace PLY
 			{
 				m_header.add_element(name);
 				add_properties(std::forward<Args>(properties)...);
+			}
+
+			void add_element_n(std::string const &name, size_t count)
+			{
+				m_header.add_element(name, count);
 			}
 
 			void add_comment(std::string const &comment)
@@ -49,6 +57,7 @@ namespace PLY
 
 			void write(std::string const &filename, Format format = ASCII) const;
 
+
 		private:
 			void add_properties(Property const &prop)
 			{
@@ -62,5 +71,7 @@ namespace PLY
 				add_properties(std::forward<Args>(args)...);
 			}
 	};
+	
+	extern std::shared_ptr<PLY> read(std::string const &filename) throw (std::exception);
 }
 
