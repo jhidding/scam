@@ -10,6 +10,8 @@ namespace PLY
 	template <typename T> using ptr = std::unique_ptr<T>;
 
 	template <typename T>
-	struct Type { static std::string name; };
+	struct Type { 
+		static std::string name; 
+	};
 }
 

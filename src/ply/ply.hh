@@ -14,9 +14,19 @@
 
 namespace PLY
 {
+	class Exception: public std::exception
+	{
+		std::string msg;
+
+		public:
+			Exception(std::string const &msg_): msg(msg_) {}
+			char const *what() const throw () { return msg.c_str(); }
+			~Exception() throw () {}
+	};
+
 	class PLY
 	{
-		friend std::shared_ptr<PLY> read(std::string const &) throw (std::exception);
+		friend std::shared_ptr<PLY> read(std::string const &) throw (Exception);
 
 		private:
 			Header 			m_header;
@@ -33,6 +43,11 @@ namespace PLY
 			void add_element_n(std::string const &name, size_t count)
 			{
 				m_header.add_element(name, count);
+			}
+
+			void add_property(Property const &prop)
+			{
+				m_header.add_property(prop);
 			}
 
 			void add_comment(std::string const &comment)
@@ -57,6 +72,12 @@ namespace PLY
 
 			void write(std::string const &filename, Format format = ASCII) const;
 
+			void print_header(std::ostream &out, Format format = ASCII) const;
+
+			Header::Element const &operator[](std::string const &name) const
+			{
+				return m_header[name];
+			}
 
 		private:
 			void add_properties(Property const &prop)
@@ -72,6 +93,6 @@ namespace PLY
 			}
 	};
 	
-	extern std::shared_ptr<PLY> read(std::string const &filename) throw (std::exception);
+	extern std::shared_ptr<PLY> read(std::string const &filename) throw (Exception);
 }
 

@@ -19,6 +19,9 @@ namespace Scam
 		public:
 			Vertex() {}
 
+			Vertex(double x, double y, double z):
+				Point(x, y, z), id(count++) {}
+
 			Vertex(Point const &p_):
 				Point(p_), id(count++) {}
 

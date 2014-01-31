@@ -7,6 +7,9 @@
 #include <map>
 
 #include "base.hh"
+#include "data.hh"
+
+#include "../base/common.hh"
 
 namespace PLY
 {
@@ -19,6 +22,9 @@ namespace PLY
 			std::string const &name() const { return m_name; }
 			virtual std::string type_expression() const = 0;
 			virtual ptr<Property> copy() const = 0;
+
+			virtual ptr<Datum> datum() const = 0;
+			virtual bool list_type() const = 0;
 	};
 
 	class Header
@@ -65,16 +71,17 @@ namespace PLY
 			typedef std::string Comment;
 
 		private:
-			mutable Format			m_format;
-			std::vector<Comment> 		m_comments;
-			std::vector<ptr<Element>>	m_elements;
+			mutable Format				m_format;
+			std::vector<Comment> 			m_comments;
+			std::vector<std::string>		m_names;
+			std::map<std::string,ptr<Element>>	m_elements;
 
 		public:
 			Format format() const 
 				{ return m_format; }
 			std::vector<Comment> const &comments() const 
 				{ return m_comments; }
-			std::vector<ptr<Element>> const &elements() const 
+			std::map<std::string,ptr<Element>> const &elements() const 
 				{ return m_elements; }
 
 			void set_format(Format format_) const
@@ -89,22 +96,33 @@ namespace PLY
 
 			void add_element(std::string const &name)
 			{
-				m_elements.push_back(ptr<Element>(new Element(name)));
+				m_elements[name] = ptr<Element>(new Element(name));
+				m_names.push_back(name);
+				//m_elements.push_back(ptr<Element>(new Element(name)));
 			}
 
 			void add_element(std::string const &name, size_t n)
 			{
-				m_elements.push_back(ptr<Element>(new Element(name, n)));
+				m_elements[name] = ptr<Element>(new Element(name ,n));
+				m_names.push_back(name);
+				//m_elements.push_back(ptr<Element>(new Element(name, n)));
 			}
 
 			void add_property(Property const &property)
 			{
-				m_elements.back()->add_property(property);
+				m_elements[m_names.back()]->add_property(property);
 			}
 
 			void add_item()
 			{
-				m_elements.back()->add_item();
+				m_elements[m_names.back()]->add_item();
+			}
+
+			std::vector<std::string> const &names() const { return m_names; }
+
+			Element const &operator[](std::string const &name) const
+			{
+				return *m_elements.find(name)->second;
 			}
 	};
 
@@ -122,6 +140,13 @@ namespace PLY
 				return ptr<Property>(
 					new Scalar<T>(name()));
 			};
+			
+			virtual ptr<Datum> datum() const
+			{
+				return ptr<Datum>(new Data::Scalar<T>);
+			}
+
+			bool list_type() const { return false; }
 	};
 
 	template <typename T, typename length_type>
@@ -139,6 +164,13 @@ namespace PLY
 				return ptr<Property>(
 					new List<T, length_type>(name()));
 			};
+
+			virtual ptr<Datum> datum() const
+			{
+				return ptr<Datum>(new Data::List<T, length_type>);
+			}
+
+			bool list_type() const { return true; }
 	};
 
 	template <typename T>

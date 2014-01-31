@@ -132,6 +132,7 @@ namespace Scam
 
 			operator bool() const { return static_cast<bool>(X); }
 			T const &operator*() const { return *X; }
+			T const *operator->() const { return X.get(); }
 	};
 
 	class MaybeNothing
@@ -228,7 +229,7 @@ namespace Scam
 	}
 
 	template <typename F, typename T>
-	auto map(F f, Array<T> a) -> Array<decltype(f(*a.begin()))>
+	auto map(F f, T a) -> Array<decltype(f(*a.begin()))>
 	{
 		using R = decltype(f(*a.begin()));
 		Array<R> c;

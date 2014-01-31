@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <string>
 #include <vector>
@@ -10,8 +11,15 @@ namespace PLY
 	class Datum
 	{
 		public:
+			virtual std::vector<char> raw() const = 0;
+			virtual std::string type_name() const = 0;
+			virtual size_t type_size() const = 0;
+			virtual size_t size() const = 0;
+	
 			virtual void write_binary(std::ostream &out) const = 0;
 			virtual void write_ascii(std::ostream &out) const = 0;
+			virtual void read_binary(std::istream &in) = 0;
+			virtual void read_ascii(std::istream &in) = 0;
 			virtual ptr<Datum> copy() const = 0;
 	};
 

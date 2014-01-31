@@ -2,6 +2,11 @@
 class Data::DatumSeparator: public Datum
 {
 	public:
+		virtual std::vector<char> raw() const { return std::vector<char>(); }
+		virtual std::string type_name() const { return ""; }
+		size_t type_size() const { return 0; }
+		virtual size_t size() const { return 0; }
+
 		void write_binary(std::ostream &out) const
 		{}
 
@@ -9,6 +14,10 @@ class Data::DatumSeparator: public Datum
 		{
 			out << " ";
 		}
+
+		void read_ascii(std::istream &in) {}
+
+		void read_binary(std::istream &in) {}
 
 		virtual ptr<Datum> copy() const
 		{
@@ -21,6 +30,11 @@ class Data::DatumSeparator: public Datum
 class Data::ItemSeparator: public Datum
 {
 	public:
+		virtual std::vector<char> raw() const { return std::vector<char>(); }
+		virtual std::string type_name() const { return ""; }
+		size_t type_size() const { return 0; }
+		virtual size_t size() const { return 0; }
+
 		void write_binary(std::ostream &out) const
 		{}
 
@@ -28,6 +42,10 @@ class Data::ItemSeparator: public Datum
 		{
 			out << std::endl;
 		}
+
+		void read_ascii(std::istream &in) {}
+
+		void read_binary(std::istream &in) {}
 
 		virtual ptr<Datum> copy() const
 		{
@@ -43,6 +61,19 @@ class Data::Scalar: public Datum
 	T	m_value;
 
 	public:
+		virtual std::vector<char> raw() const 
+		{ 
+			std::vector<char> A;
+			for (unsigned i = 0; i < sizeof(T); ++i)
+				A.push_back(*(reinterpret_cast<char const *>(&m_value) + i));
+			return A;
+		}
+
+		size_t type_size() const { return sizeof(T); }
+		virtual std::string type_name() const { return PLY::Type<T>::name; }
+		virtual size_t size() const { return 1; }
+
+		Scalar() {}
 		Scalar(T t): m_value(t) {}
 
 		void write_binary(std::ostream &out) const
@@ -58,6 +89,25 @@ class Data::Scalar: public Datum
 				out << m_value;
 		}
 
+		void read_ascii(std::istream &in)
+		{
+			if (typeid(T) == typeid(uint8_t))
+			{
+				int a;
+				in >> a;
+				m_value = a;
+			}
+			else
+			{
+				in >> m_value;
+			}
+		}
+
+		void read_binary(std::istream &in)
+		{
+			in.read(reinterpret_cast<char *>(&m_value), sizeof(T));
+		}
+
 		virtual ptr<Datum> copy() const
 		{
 			return ptr<Datum>(new Scalar<T>(m_value));
@@ -70,8 +120,20 @@ template <typename T, typename length_type>
 class Data::List: public Datum
 {
 	std::vector<T> m_value;
-
 	public:
+		virtual std::vector<char> raw() const 
+		{ 
+			std::vector<char> A;
+			for (unsigned i = 0; i < sizeof(T)*m_value.size(); ++i)
+				A.push_back(*(reinterpret_cast<char const *>(m_value.data()) + i));
+			return A;
+		}
+		virtual std::string type_name() const { return PLY::Type<T>::name; }
+		size_t type_size() const { return sizeof(T); }
+		size_t size() const { return m_value.size(); }
+
+		List() {}
+
 		template <typename U>
 		List(U const &u): m_value(u.begin(), u.end()) {}
 
@@ -80,7 +142,7 @@ class Data::List: public Datum
 			length_type length = m_value.size();
 			out.write(reinterpret_cast<char *>(&length), sizeof(length_type));
 			for (T v : m_value) 
-				out.write(reinterpret_cast<char *>(&v), sizeof(T));
+				out.write(reinterpret_cast<char const *>(&v), sizeof(T));
 		}
 
 		void write_ascii(std::ostream &out) const
@@ -91,6 +153,25 @@ class Data::List: public Datum
 					out << " " << int(v);
 				else
 					out << " " << v;
+		}
+
+		void read_ascii(std::istream &in)
+		{
+			length_type s;
+			in >> s;
+			for (length_type i = 0; i < s; ++i)
+			{
+				T v; in >> v;
+				m_value.push_back(v);
+			}
+		}
+
+		void read_binary(std::istream &in)
+		{
+			length_type s;
+			in.read(reinterpret_cast<char *>(&s), sizeof(length_type));
+			m_value.resize(s);
+			in.read(reinterpret_cast<char *>(m_value.data()), sizeof(T)*s);
 		}
 
 		virtual ptr<Datum> copy() const

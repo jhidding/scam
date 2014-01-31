@@ -91,3 +91,9 @@ void PLY::PLY::write(std::string const &filename, Format format) const
 	out.close();
 }
 
+void PLY::PLY::print_header(std::ostream &out, Format format) const
+{
+	m_header.set_format(format);
+	out << m_header;
+}
+
