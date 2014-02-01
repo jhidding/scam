@@ -15,7 +15,7 @@
 #	hidden directory (or somewhere outside the directory
 #	structure, which is even better)
 
-target="scam"
+target="cscam"
 objdir="obj"
 
 CAIRO_LDFLAGS=$(pkg-config --libs cairomm-1.0)

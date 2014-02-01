@@ -59,7 +59,7 @@ Test::Unit PLY_test(
 	}
 
 	ply.add_element("face",
-		PLY::list_type<unsigned>("vertex_index"));
+		PLY::list_type<unsigned>("vertex_indices"));
 	mVector<int,2> dx({0, 1}), dy({1, 0});
 	for (auto p : MdRange<2>(mVector<int,2>(N-1)))
 	{

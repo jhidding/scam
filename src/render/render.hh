@@ -72,6 +72,8 @@ namespace Scam
 				P(P_), M(M_)
 			{}
 
+			size_t size() const { return P.size(); }
+
 			Array<Drawable> operator()(Camera const &C) const
 			{
 				Array<Drawable> D;
@@ -113,6 +115,7 @@ namespace Scam
 			{
 				auto drawables = flatmap([&C] (RenderObject const &r) { return r(C); }, Scene);
 				sort(drawables);
+				std::cerr << "rendering " << drawables.size() << " polygons.\n";
 				for_each([this] (Drawable const &d) { return d(m_context); }, drawables);
 			}
 	};

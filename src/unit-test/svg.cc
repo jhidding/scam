@@ -38,14 +38,14 @@ Test::Unit _test_SVG(
 	}));
 
 	Camera C(
-		Point(3, 2, 1), Point(0.5,0.5,0.5), Vector(0, 0, 1),
+		Point(3, 2, 1), Point(0.5,0.5,0.5), Vector(0, 0, -1),
 		parallel_projection);
 		
 	auto R = Renderer::SVG(300, 300, "cube.svg");
 	R->apply([] (Context cx)
 	{
 		cx->scale(200, 200);
-		cx->translate(0.75,-0.3);
+		cx->translate(0.75,0.75);
 		cx->set_line_join(Cairo::LINE_JOIN_ROUND);
 	});
 

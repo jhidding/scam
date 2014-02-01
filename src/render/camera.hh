@@ -23,7 +23,7 @@ namespace Scam
 				Projection const 	&p_):
 				P(p_)
 			{
-				T = [position] (Point const &p) { return position - p; };
+				T = [position] (Point const &p) { return p - position; };
 
 				Vector 	line_of_sight = T(target).normalize();
 				Point	origin = Point(0, 0, 0);
@@ -33,7 +33,7 @@ namespace Scam
 				 * coordinate system. So we have to rotate around the cross
 				 * product of z-axis and l.o.s.
 				 */
-				Vector	adjust = Vector::cross(z_axis, line_of_sight);
+				Vector	adjust = Vector::cross(-z_axis, line_of_sight).normalize();
 				Quat	pitch = Quat::rotation(adjust, acos(z_axis * line_of_sight));
 
 				/* The shub should point up! (think "should be up"-hub),
@@ -54,7 +54,7 @@ namespace Scam
 			Plane operator()(Plane const &p) const { return Plane(project(p.origin()), rotate(p.normal())); }
 	};
 
-	Point parallel_projection(Vector const &v)
+	inline Point parallel_projection(Vector const &v)
 	{
 		return Point(v.x(), v.y(), v.z());
 	}
