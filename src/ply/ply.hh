@@ -14,16 +14,6 @@
 
 namespace PLY
 {
-	class Exception: public std::exception
-	{
-		std::string msg;
-
-		public:
-			Exception(std::string const &msg_): msg(msg_) {}
-			char const *what() const throw () { return msg.c_str(); }
-			~Exception() throw () {}
-	};
-
 	class PLY
 	{
 		friend std::shared_ptr<PLY> read(std::string const &) throw (Exception);

@@ -1,11 +1,11 @@
-#include "ply.hh"
-#include <fstream>
-#include <stdexcept>
-#include <sstream>
+#include "read.hh"
 #include "../base/common.hh"
 
 using namespace PLY;
-using namespace Scam;
+//using namespace Scam;
+using Scam::Maybe;
+using Scam::Just;
+using Scam::Nothing;
 
 Maybe<std::pair<std::string, std::string>> split(std::string const &line, char c)
 {
@@ -44,7 +44,7 @@ T from_string(std::string const &s)
 	return value;
 }
 
-Format read_header(std::istream &fi, std::shared_ptr<PLY::PLY> ply) throw (Exception)
+Format PLY::read_header(std::istream &fi, std::shared_ptr<PLY> ply) throw (Exception)
 {
 	std::string line;
 	Format format;
@@ -79,13 +79,13 @@ Format read_header(std::istream &fi, std::shared_ptr<PLY::PLY> ply) throw (Excep
 
 			if (S2->first == "ascii")
 			{
-				format = PLY::ASCII;
+				format = ASCII;
 				continue;
 			}
 
 			if (S2->first == "binary_little_endian")
 			{
-				format = PLY::BINARY;
+				format = BINARY;
 				continue;
 			}
 
@@ -150,197 +150,27 @@ Format read_header(std::istream &fi, std::shared_ptr<PLY::PLY> ply) throw (Excep
 	return format;
 }
 
-#include "../geometry/geometry.hh"
-
-template <typename T, typename U>
-T cast(char const *d)
-{
-	return static_cast<T>(*reinterpret_cast<U const *>(d));
-}
-
-template <typename T>
-T caster(std::string const &type, char const *d)
-{
-	if (type == "char")	return cast<T, int8_t>(d);
-	if (type == "uchar") 	return cast<T, uint8_t>(d);
-	if (type == "short") 	return cast<T, int16_t>(d);
-	if (type == "ushort") 	return cast<T, uint16_t>(d);
-	if (type == "int") 	return cast<T, int32_t>(d);
-	if (type == "uint") 	return cast<T, uint32_t>(d);
-	if (type == "float") 	return cast<T, float>(d);
-	if (type == "double") 	return cast<T, double>(d);
-};
-
-struct Atom
-{
-	std::vector<char> u;
-	std::string type;
-	unsigned type_size;
-
-	Atom() {}
-	Atom(std::vector<char> u_, std::string const &type_, unsigned type_size_):
-		u(u_), type(type_), type_size(type_size_) 
-	{}
-			
-	template <typename T>
-	T as() const { return caster<T>(type,u.data()); }
-
-	size_t size() const { return u.size()  / type_size; }
-
-	template <typename T>
-	T idx(unsigned i) const { return caster<T>(type,u.data() + i*type_size); }
-
-	template <typename T>
-	std::vector<T> as_vector() const {
-		std::vector<T> result;
-		for (unsigned i = 0; i < size(); ++i)
-			result.push_back(idx<T>(i));
-		return result;
-	}
-};
-
-class Item: public std::map<std::string, Atom>
-{
-	public:
-		template <typename T> T get(std::string const &q) const
-		{ return find(q)->second.as<T>(); }
-		template <typename T> std::vector<T> get_vector(std::string const &q) const
-		{ return find(q)->second.as_vector<T>(); }
-};
-
-using Block = Array<Item>;
-
-Block read_element(std::istream &fi, PLY::Header::Element const &e, Format format)
+Block PLY::read_element(std::istream &fi, Header::Element const &e, Format format)
 {
 	Block A;
-	std::vector<PLY::ptr<PLY::Property>> const &P = e.properties();
+	std::vector<ptr<Property>> const &P = e.properties();
 	for (size_t i = 0; i < e.count(); ++i)
 	{
 		Item I;
 		for (auto p = P.begin(); p != P.end(); ++p)
 		{
 			auto d = (*p)->datum();
-			if (format == PLY::ASCII)
-				d->read_ascii(fi);
-			else
-				d->read_binary(fi);
+			switch (format)
+			{
+				case ASCII:  d->read_ascii(fi); break;
+				case BINARY: d->read_binary(fi); break;
+				default:     throw Exception("Unsupported format encountered.");
+			}
 
-			I[(*p)->name()] = Atom(d->raw(), d->type_name(), d->type_size());
+			I[(*p)->name()] = d->byte_vector();
 		}
 		A.push_back(I);
 	}
 	return A;
 }
-
-Scam::Array<Scam::Vertex> read_vertices(std::istream &fi, Scam::ptr<PLY::PLY> ply, Format format)
-{
-	Scam::Array<Scam::Vertex> result;
-	auto block = read_element(fi, (*ply)["vertex"], format);
-	
-	for (auto const &item : block)
-	{
-		double x = item.get<double>("x"),
-		       y = item.get<double>("y"),
-		       z = item.get<double>("z");
-
-		result.push_back(Scam::Vertex(x, y, z));
-	}
-
-	return result;
-}
-
-Scam::Array<Scam::Polygon> read_polygons(std::istream &fi, Scam::ptr<PLY::PLY> ply, Scam::Array<Scam::Vertex> vertices, Format format)
-{
-	Scam::Array<Scam::Polygon> result;
-	auto block = read_element(fi, (*ply)["face"], format);
-	size_t i = 0;
-	for (auto const &item : block)
-	{
-		auto indices = item.get_vector<unsigned>("vertex_indices");
-		auto V = Scam::map([vertices] (int i) { return vertices[i]; }, indices);
-		result.push_back(Polygon(V));
-	}
-
-	return result;
-}
-
-std::shared_ptr<PLY::PLY> PLY::read(std::string const &filename) throw (Exception)
-{
-	auto ply = std::make_shared<PLY>();
-
-	std::ifstream fi(filename);
-	Format format = read_header(fi, ply);
-
-	return ply;
-}
-
-#ifdef UNITTEST
-#include "../base/unittest.hh"
-#include "../render/render.hh"
-
-Test::Unit _test_PLY_read(
-	"PLY01", "Reading a .ply file.",
-	[] ()
-{
-	auto ply = make_ptr<PLY::PLY>();
-
-	std::ifstream fi("test/stanford_bunny.ply");
-	Format format = read_header(fi, ply);
-	ply->print_header(std::cout, BINARY);
-	auto v = read_vertices(fi, ply, format);
-	std::cout << "read " << v.size() << " vertices.\n";
-	auto polygons = read_polygons(fi, ply, v, format);
-	std::cout << "read " << polygons.size() << " polygons.\n";
-
-	double cx = 0, cy = 0, cz = 0;
-	for (Point p : v)
-	{
-		cx += p.x(); cy += p.y(); cz += p.z();
-	}
-	Point centre(cx/v.size(), cy/v.size(), cz/v.size());
-	std::cout << "centre of object lies at " << centre << "\n";
-	double mar=0;
-	for (Point p : v)
-		mar = std::max((p - centre).sqr(), mar);
-	mar = sqrt(mar);
-
-	Array<RenderObject> scene;
-	scene.push_back(RenderObject(polygons, [] (Plane const &P, Context cx)
-	{
-		double s = P.normal() * Vector(0, 0, 1);
-		cx->set_source_rgb(1,fabs(s),fabs(s));
-		cx->fill_preserve();
-		cx->set_source_rgb(0,0,0);
-		cx->set_line_width(0.0001);
-		cx->stroke();
-	}));
-	
-	Camera C(
-		Point(-1.0, 0.5, 1.0), centre, Vector(0, -1, 0),
-			parallel_projection);
-	
-
-	auto R = Renderer::SVG(300, 300, "bunny.svg");
-	R->apply([mar] (Context cx)
-	{
-		double L = 2;
-		double N = 300;
-		cx->scale(N/L,N/L);
-		cx->translate(L/2, L/2);
-		cx->set_source_rgb(0.5,0.5,0.5);
-		cx->arc(0,0,1.0,0,6.283184);
-		cx->set_line_width(0.01);
-		cx->stroke();
-		cx->scale(1./mar, 1./mar);
-		cx->set_line_join(Cairo::LINE_JOIN_ROUND);
-	});
-
-	R->render(scene, C);
-	R->finish();
-	std::cout << std::endl;
-
-	return true;
-});
-
-#endif
 

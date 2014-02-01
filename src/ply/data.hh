@@ -11,10 +11,7 @@ namespace PLY
 	class Datum
 	{
 		public:
-			virtual std::vector<char> raw() const = 0;
-			virtual std::string type_name() const = 0;
-			virtual size_t type_size() const = 0;
-			virtual size_t size() const = 0;
+			virtual ByteVector byte_vector() const = 0;
 	
 			virtual void write_binary(std::ostream &out) const = 0;
 			virtual void write_ascii(std::ostream &out) const = 0;

@@ -2,10 +2,7 @@
 class Data::DatumSeparator: public Datum
 {
 	public:
-		virtual std::vector<char> raw() const { return std::vector<char>(); }
-		virtual std::string type_name() const { return ""; }
-		size_t type_size() const { return 0; }
-		virtual size_t size() const { return 0; }
+		virtual ByteVector byte_vector() const { throw Exception("No byte representation for separator."); }
 
 		void write_binary(std::ostream &out) const
 		{}
@@ -30,10 +27,7 @@ class Data::DatumSeparator: public Datum
 class Data::ItemSeparator: public Datum
 {
 	public:
-		virtual std::vector<char> raw() const { return std::vector<char>(); }
-		virtual std::string type_name() const { return ""; }
-		size_t type_size() const { return 0; }
-		virtual size_t size() const { return 0; }
+		virtual ByteVector byte_vector() const { throw Exception("No byte representation for separator."); }
 
 		void write_binary(std::ostream &out) const
 		{}
@@ -61,17 +55,13 @@ class Data::Scalar: public Datum
 	T	m_value;
 
 	public:
-		virtual std::vector<char> raw() const 
-		{ 
+		virtual ByteVector byte_vector() const 
+		{
 			std::vector<char> A;
 			for (unsigned i = 0; i < sizeof(T); ++i)
 				A.push_back(*(reinterpret_cast<char const *>(&m_value) + i));
-			return A;
+			return ByteVector(A, PLY::Type<T>::id);
 		}
-
-		size_t type_size() const { return sizeof(T); }
-		virtual std::string type_name() const { return PLY::Type<T>::name; }
-		virtual size_t size() const { return 1; }
 
 		Scalar() {}
 		Scalar(T t): m_value(t) {}
@@ -120,17 +110,15 @@ template <typename T, typename length_type>
 class Data::List: public Datum
 {
 	std::vector<T> m_value;
+
 	public:
-		virtual std::vector<char> raw() const 
-		{ 
+		virtual ByteVector byte_vector() const
+		{
 			std::vector<char> A;
 			for (unsigned i = 0; i < sizeof(T)*m_value.size(); ++i)
 				A.push_back(*(reinterpret_cast<char const *>(m_value.data()) + i));
-			return A;
+			return ByteVector(A, PLY::Type<T>::id);
 		}
-		virtual std::string type_name() const { return PLY::Type<T>::name; }
-		size_t type_size() const { return sizeof(T); }
-		size_t size() const { return m_value.size(); }
 
 		List() {}
 
