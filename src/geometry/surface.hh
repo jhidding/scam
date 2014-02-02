@@ -18,12 +18,16 @@ namespace Scam
 			virtual Maybe<Point> intersect(Point const &a, Point const &b) const = 0;
 
 			bool is_below(Point const &a) const;
+			bool is_below(Polygon const &P) const;
+			bool is_below(Segment const &P) const;
 
 			std::pair<Maybe<Polygon>, Maybe<Polygon>> split_polygon(
 				Polygon const &p) const;
 			std::pair<Maybe<Polygon>, Maybe<Polygon>> split_polygon(
 				ptr<std::unordered_map<Segment,Vertex>> cache, Polygon const &p) const;
 
+			std::pair<Maybe<Segment>, Maybe<Segment>> split_segment(
+				Segment const &s) const;
 		private:
 	};
 

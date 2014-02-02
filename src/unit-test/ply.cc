@@ -5,6 +5,7 @@
 #include "../base/unittest.hh"
 #include "../render/render.hh"
 #include "../geometry/geometry.hh"
+#include "../render/map_projection.hh"
 
 using namespace Scam;
 
@@ -70,30 +71,34 @@ Test::Unit _test_PLY_read(
 	scene.push_back(RenderObject(polygons, [] (Plane const &P, Context cx)
 	{
 		double s = P.normal() * Vector(0, 0, 1);
-		cx->set_source_rgb(1,fabs(s),fabs(s));
+		cx->set_source_rgba(1,fabs(s),fabs(s),0.6);
 		cx->fill_preserve();
 		cx->set_source_rgb(0,0,0);
-		cx->set_line_width(0.0001);
+		cx->set_line_width(0.001);
 		cx->stroke();
 	}));
 	
-	Camera C(
-		Point(-1.0, 0.5, 1.0), centre, Vector(0, -1, 0),
-			parallel_projection);
-	
+	auto C = make_ptr<Map_projection_camera>(
+		centre, centre + Vector(-1, 0, 1), Vector(0, -1, 0),
+		//Point(-1.0, 0.5, 1.0), centre, Vector(0, -1, 0),
+			Map_projection(Aitoff_Hammer));
 
-	auto R = Renderer::SVG(300, 300, "bunny.svg");
-	R->apply([mar] (Context cx)
+	double N = 300;	
+	auto R = Renderer::SVG(2*N, N, "bunny_hammer.svg");
+	R->apply([mar,N] (Context cx)
 	{
-		double L = 2;
-		double N = 300;
+		double L = 3;
 		cx->scale(N/L,N/L);
-		cx->translate(L/2, L/2);
+		cx->translate(L, L/2);
 		cx->set_source_rgb(0.5,0.5,0.5);
+
+		cx->save();
+		cx->scale(2*sqrt(2), sqrt(2));
 		cx->arc(0,0,1.0,0,6.283184);
 		cx->set_line_width(0.01);
 		cx->stroke();
-		cx->scale(1./mar, 1./mar);
+		cx->restore();
+
 		cx->set_line_join(Cairo::LINE_JOIN_ROUND);
 	});
 

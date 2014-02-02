@@ -49,9 +49,21 @@ bool Surface::is_below(Point const &a) const
 	return distance(a) < 0;
 }
 
+bool Surface::is_below(Segment const &s) const
+{
+	return is_below(s.first()) and is_below(s.second());
+}
+
+bool Surface::is_below(Polygon const &p) const
+{
+	for (Vertex const &v : p)
+		if (not is_below(v)) return false;
+	return true;
+}
+
 template <typename F1, typename F2>
 std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
-	F1 splitter, F2 is_below, Polygon const &P)
+	F1 splitter, F2 is_below, Polygon const &P, bool closed = true)
 {
 	using return_type = std::pair<Maybe<Polygon>,Maybe<Polygon>>;
 
@@ -59,7 +71,9 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
 
 	std::vector<Vertex> V; 
 	std::copy(P.vertices().begin(), P.vertices().end(), std::back_inserter(V));
-	V.push_back(V.front());
+
+	if (closed)
+		V.push_back(V.front());
 
 	Array<Vertex> Q1, Q2;
 
@@ -147,5 +161,29 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
 		{
 			return this->is_below(p);
 		}, P);
+}
+
+std::pair<Maybe<Segment>, Maybe<Segment>> 
+Surface::split_segment(Segment const &s) const
+{
+	using return_type = 
+		std::pair<Maybe<Segment>, Maybe<Segment>>;
+
+	bool a = is_below(s.first()), b = is_below(s.second());
+
+	if (a and b)
+		return return_type(Just(s), Nothing);
+
+	if ((not a) and (not b))
+		return return_type(Nothing, Just(s));
+
+	auto p = intersect(s.first(), s.second());
+	if (not p) // shouldn't happen
+		return return_type(Just(s), Nothing);
+
+	Vertex v(*p);
+	return return_type(
+		Just(Segment(s.first(), v)),
+		Just(Segment(v, s.second())));
 }
 

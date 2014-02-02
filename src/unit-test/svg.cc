@@ -37,7 +37,7 @@ Test::Unit _test_SVG(
 		cx->stroke();
 	}));
 
-	Camera C(
+	auto C = make_ptr<Camera>(
 		Point(3, 2, 1), Point(0.5,0.5,0.5), Vector(0, 0, -1),
 		parallel_projection);
 		

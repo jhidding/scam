@@ -4,6 +4,16 @@
 
 namespace Scam
 {
+	class Path: public Array<Point>
+	{
+		bool m_closed;
+
+		public:
+			Path(bool closed_ = true): m_closed(closed_) {}
+
+			bool closed() const { return m_closed; }
+	};
+
 	class Camera
 	{
 		public:
@@ -46,12 +56,23 @@ namespace Scam
 				R = roll * pitch;
 			}
 
+			Vector translate(Point const &p) const { return T(p); }
 			Vector rotate(Vector const &v) const { return R(v); }
-			Point  project(Point const &p) const { return P(R(T(p))); }
+			Point  project(Vector const &v) const { return P(v); }
 
-			Point operator()(Point const &p) const { return project(p); }
-			Vector operator()(Vector const &v) const { return rotate(v); }
-			Plane operator()(Plane const &p) const { return Plane(project(p.origin()), rotate(p.normal())); }
+			virtual Point operator()(Point const &p) const { return P(R(T(p))); }
+			virtual Vector operator()(Vector const &v) const { return R(v); }
+			virtual Plane operator()(Plane const &p) const { return Plane(P(R(T(p.origin()))), R(p.normal())); }
+
+			virtual Array<Path> operator()(Polygon const &Q) const
+			{
+				Path A(true);
+				for (Point const &p : Q) 
+					A.push_back(P(R(T(p))));
+
+				Array<Path> B; B.push_back(A);
+				return B;
+			}
 	};
 
 	inline Point parallel_projection(Vector const &v)

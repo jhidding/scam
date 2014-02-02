@@ -12,26 +12,21 @@ namespace Scam
 {
 	using Context = Cairo::RefPtr<Cairo::Context>;
 	using Material = std::function<void (Plane const &, Context)>;
-	using Path = Array<Point>;
 
 	class Drawable
 	{
-		Path 		G;
+		Path		G;
 		Plane		P;
 		Material	M;
 
-		bool		closed;
 		double		z;
 
 		public:
 			Drawable() {}
 
-			Drawable(Polygon const &P_, Material const &M_, Camera const &C):
-				P(C(P_.plane())), M(M_), closed(true)
+			Drawable(Path const &G_, Plane const &P_, Material const &M_):
+				G(G_), P(P_), M(M_)
 			{
-				std::transform(P_.begin(), P_.end(),
-					std::back_inserter(G), C);
-
 				auto z_values = lazy_map(G, [] (Point const &x) { return x.z(); });
 				z = *std::max_element(z_values.begin(), z_values.end());
 			}
@@ -46,7 +41,7 @@ namespace Scam
 				for (Point const &p : tail(G))
 					cx->line_to(p.x(), p.y());
 
-				if (closed)
+				if (G.closed())
 					cx->close_path();
 
 				M(P, cx);
@@ -74,11 +69,15 @@ namespace Scam
 
 			size_t size() const { return P.size(); }
 
-			Array<Drawable> operator()(Camera const &C) const
+			Array<Drawable> operator()(ptr<Camera> C) const
 			{
 				Array<Drawable> D;
 				for (Polygon const &p : P)
-					D.push_back(Drawable(p, M, C));
+				{
+					Array<Path> A = (*C)(p);
+					for (Path const g : A)
+						D.push_back(Drawable(g, (*C)(p.plane()), M));
+				}
 				return D;
 			}
 	};
@@ -111,9 +110,9 @@ namespace Scam
 				f(m_context);
 			}
 
-			void render(Array<RenderObject> Scene, Camera const &C)
+			void render(Array<RenderObject> Scene, ptr<Camera> C)
 			{
-				auto drawables = flatmap([&C] (RenderObject const &r) { return r(C); }, Scene);
+				auto drawables = flatmap([C] (RenderObject const &r) { return r(C); }, Scene);
 				sort(drawables);
 				std::cerr << "rendering " << drawables.size() << " polygons.\n";
 				for_each([this] (Drawable const &d) { return d(m_context); }, drawables);
