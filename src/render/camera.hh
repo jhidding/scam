@@ -26,14 +26,17 @@ namespace Scam
 			Rotation    R;
 			Projection  P;
 
+			Point  position, target;
+			Vector shub;
+
 		public:
-			Camera(	Point const 		&position, 
-				Point const 		&target, 
-				Vector const 		&shub, 
+			Camera(	Point const 		&position_, 
+				Point const 		&target_, 
+				Vector const 		&shub_, 
 				Projection const 	&p_):
-				P(p_)
+				P(p_), position(position_), target(target_), shub(shub_)
 			{
-				T = [position] (Point const &p) { return p - position; };
+				T = [position_] (Point const &p) { return p - position_; };
 
 				Vector 	line_of_sight = T(target).normalize();
 				Point	origin = Point(0, 0, 0);
@@ -54,6 +57,19 @@ namespace Scam
 				Quat	roll = Quat::rotation(z_axis, roll_angle);
 
 				R = roll * pitch;
+			}
+
+			Vector at_point(Point const &p, Vector const &v) const
+			{
+				Vector	line_of_sight = T(p).normalize();
+				Point	origin = Point(0, 0, 0);
+				Vector  z_axis = Vector(0, 0, 1);
+				Vector	adjust = Vector::cross(-z_axis, line_of_sight).normalize();
+				Quat	pitch = Quat::rotation(adjust, acos(z_axis * line_of_sight));
+				Vector  ps = pitch(shub);
+				double	roll_angle = atan2(ps.x(), ps.y());
+				Quat	roll = Quat::rotation(z_axis, roll_angle);
+				return (roll * pitch)(v);
 			}
 
 			Vector translate(Point const &p) const { return T(p); }

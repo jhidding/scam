@@ -71,7 +71,7 @@ Test::Unit _test_PLY_read(
 	scene.push_back(RenderObject(polygons, [] (Plane const &P, Context cx)
 	{
 		double s = P.normal() * Vector(0, 0, 1);
-		cx->set_source_rgba(1,fabs(s),fabs(s),0.6);
+		cx->set_source_rgba(1,s*s,s*s,0.6);
 		cx->fill_preserve();
 		cx->set_source_rgb(0,0,0);
 		cx->set_line_width(0.001);

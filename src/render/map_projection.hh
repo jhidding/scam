@@ -30,7 +30,7 @@ namespace Scam
 		public:
 			Map_projection_splitter(Point const &origin, Point const &target, Vector const &shub):
 				cut(origin, Vector::cross(shub, target - origin)),
-				shd(origin, target - origin) {}
+				shd(origin, origin - target) {}
 
 			std::tuple<Maybe<Polygon>, Maybe<Polygon>, Maybe<Polygon>> 
 			operator()(Polygon const &P) const
@@ -38,10 +38,9 @@ namespace Scam
 				using return_type = 
 					std::tuple<Maybe<Polygon>, Maybe<Polygon>, Maybe<Polygon>>;
 
-				if (not shd.is_below(P))
+				if (shd.is_below(P))
 					return return_type(Nothing, Just(P), Nothing);
 
-				std::cerr << "s";
 				auto split = cut.split_polygon(P);
 
 				return return_type(split.first, Nothing, split.second);
@@ -53,7 +52,7 @@ namespace Scam
 				using return_type = 
 					std::tuple<Maybe<Segment>, Maybe<Segment>, Maybe<Segment>>;
 
-				if (not shd.is_below(P))
+				if (shd.is_below(P))
 					return return_type(Nothing, Just(P), Nothing);
 
 				auto split = cut.split_segment(P);
@@ -118,9 +117,15 @@ namespace Scam
 				m_project(p_)
 			{}
 
+			Plane operator()(Plane const &p) const
+			{
+				return Plane(
+					m_project.middle(rotate(translate(p.origin()))),
+					at_point(p.origin(), p.normal()) );
+			}
+
 			Array<Path> operator()(Polygon const &P) const
 			{
-				std::cerr << "p";
 				Array<Path> A;
 				auto S = m_split(P);
 
