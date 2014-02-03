@@ -100,6 +100,16 @@ namespace Scam
 				return ptr<Renderer>(new Renderer(Cairo::SvgSurface::create(filename, width, height)));
 			}
 
+			static ptr<Renderer> Image(double width, double height)
+			{
+				return ptr<Renderer>(new Renderer(Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, height)));
+			}
+
+			void write_to_png(std::string const &fn) const
+			{
+				m_surface->write_to_png(fn);
+			}
+
 			void finish()
 			{
 				m_surface->finish();	

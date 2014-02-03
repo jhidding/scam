@@ -3,6 +3,7 @@
 #include <vector>
 #include <functional>
 #include <string>
+#include <sstream>
 
 #include "../base/common.hh"
 #include "point.hh"
@@ -51,6 +52,31 @@ namespace Scam
 				m_vert(V), m_plane(P)
 			{
 				m_hash = compute_hash();
+			}
+
+			template <typename T>
+			void set_info(std::string const &key, T const &value)
+			{
+				std::ostringstream ss;
+				ss << value;
+				m_info[key] = ss.str();
+			}
+
+			template <typename T>
+			Maybe<T> get_info(std::string const &key) const
+			{
+				auto i = m_info.find(key);
+				if (i == m_info.end()) 
+				{
+					return Nothing;
+				}
+				else
+				{
+					T value;
+					std::istringstream ss(i->second);
+					ss >> value;
+					return Just(value);
+				}
 			}
 
 			Array<Vertex> vertices() const
