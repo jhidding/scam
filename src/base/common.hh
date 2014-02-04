@@ -242,7 +242,7 @@ namespace Scam
 	{
 		return std::accumulate(A.begin(), A.end(), (typename T::value_type)(1), 
 				std::multiplies<typename T::value_type>());
-	}	
+	}
 }
 
 /*!

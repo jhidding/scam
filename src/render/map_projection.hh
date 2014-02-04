@@ -7,14 +7,14 @@ namespace Scam
 {
 	using Projection = std::function<Point (Vector const &)>;
 
-	void Aitoff_Hammer(double ra, double dec, double &x, double &y)
+	inline void Aitoff_Hammer(double ra, double dec, double &x, double &y)
 	{
 		double denom = sqrt(1 + (cos(dec) * cos(ra/2)));
 		           x = 2 * sqrt(2) * cos(dec) * sin(ra/2) / denom;
 		           y = sqrt(2) * sin(dec) / denom;
 	}
 
-	void cartesian_to_spherical(
+	inline void cartesian_to_spherical(
 		double x, double y, double z,
 		double &R, double &ra, double &dec)
 	{

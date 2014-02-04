@@ -1,7 +1,10 @@
 #pragma once
 #include <functional>
 #include <iostream>
+#include <sstream>
+#include <map>
 
+#include "../base/common.hh"
 #include "point.hh"
 #include "vector.hh"
 
@@ -12,9 +15,11 @@ namespace Scam
 		friend std::hash<Vertex>;
 
 		static size_t count;
-
 		size_t id;
 		//Point  p;
+
+		using Info_t = std::map<std::string,std::string>;
+		ptr<Info_t> m_info;
 
 		public:
 			Vertex() {}
@@ -33,6 +38,25 @@ namespace Scam
 			bool operator<(Vertex const &o) const
 			{
 				return id < o.id;
+			}
+
+			template <typename T>
+			void set_info(std::string const &key, T const &value)
+			{
+				if (not m_info) m_info = make_ptr<Info_t>();
+				std::ostringstream ss; ss << value;
+				(*m_info)[key] = ss.str();
+			}
+
+			template <typename T>
+			Maybe<T> get_info(std::string const &key) const
+			{
+				if (not m_info) return Nothing;
+				auto i = m_info->find(key);
+				if (i == m_info->end()) return Nothing;
+				std::istringstream ss(i->second);
+				T value; ss >> value;
+				return value;
 			}
 
 			/* in effect a Vertex can be treated as a Point

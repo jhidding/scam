@@ -6,6 +6,7 @@
 #include "geometry/geometry.hh"
 #include "render/render.hh"
 #include "render/map_projection.hh"
+#include "two_mass.hh"
 
 #include <ctime>
 #include <sstream>
@@ -13,6 +14,7 @@
 
 using namespace System;
 using namespace Scam;
+using namespace TwoMass;
 
 std::string date_string()
 {
@@ -94,6 +96,23 @@ Scam::Array<Scam::Polygon> read_polygons(std::istream &fi, Scam::ptr<PLY::PLY> p
 	return result;
 }
 
+Array<Vertex> read_2mass(std::string const &fn)
+{
+	Array<Vertex> A;
+	std::ifstream fi(fn);
+	while (!fi.eof())
+	{
+		Galaxy G; fi >> G;
+		double sg_ra, sg_dec;
+		ga_to_sg(radians(G.l), radians(G.b), sg_ra, sg_dec);
+		//std::cout << sg_ra << " " << sg_dec << " " << G.v << std::endl;
+		Vertex v(Point(90,90,90) + spherical_to_cartesian(sg_ra, sg_dec, G.v / 100.));
+		v.set_info("magnitude", G.k_tc);
+		A.push_back(v);
+	}
+	return A;
+}
+
 void command_cosmic(int argc_, char **argv_)
 {
 	Argv argv = read_arguments(argc_, argv_,
@@ -101,12 +120,16 @@ void command_cosmic(int argc_, char **argv_)
 			"print this help."}),
 		Option({Option::VALUED | Option::CHECK, "i", "id", date_string(),
 			"identifier for filenames."}),
+		Option({Option::VALUED | Option::CHECK, "L", "size", "100",
+			"size of the box."}),
 		Option({Option::VALUED | Option::CHECK, "t", "time", "1.0",
 			"growing mode parameter."}),
-		Option({Option::VALUED | Option::CHECK, "r1", "r1", "30",
+		Option({Option::VALUED | Option::CHECK, "rs", "rstep", "10",
 			"selection radius."}),
-		Option({Option::VALUED | Option::CHECK, "r2", "r2", "0",
-			"upper bound of selection, by default this is r1 + 10."} ));
+		Option({Option::VALUED | Option::CHECK, "dr", "dr", "10",
+			"selection radius."}),
+		Option({Option::VALUED | Option::CHECK, "w", "wall-lim", "50.0",
+			"lower limit of wall density to show."}) );
 
 	if (argv.get<bool>("help"))
 	{
@@ -116,11 +139,10 @@ void command_cosmic(int argc_, char **argv_)
 		exit(0);
 	}
 
-	double r1 = argv.get<double>("r1");
-	double r2 = (argv["r2"] == "0" ? r1 + 10 : argv.get<double>("r2"));	
 	double t = argv.get<double>("time");
+	double L = argv.get<double>("size");
+	double wall_lim = argv.get<double>("wall-lim");
 
-	std::string fn_output = timed_filename(argv["id"], Misc::format("slice-", r1, "-", r2), t, "png");
 	std::string fn_i_wall = Misc::format(argv["id"], ".", time_string(t), ".walls.ply");
 	std::string fn_i_fila = Misc::format(argv["id"], ".", time_string(t), ".filam.ply");
 
@@ -135,60 +157,92 @@ void command_cosmic(int argc_, char **argv_)
 	auto polygons = read_polygons(fi, ply, v, format);
 	std::cout << "read " << polygons.size() << " polygons.\n";
 
-	Sphere S1(Point(50,50,50), r1), S2(Point(50,50,50), r2);
-	std::cout << "filtering polygons ... \n";
-	Array<Polygon> filtered_polygons;
-	for (Polygon const &p : polygons)
-	{
-		auto d = p.get_info<double>("density");
-		if ((not d) or (*d < 50)) continue;
-		auto A = S1.split_polygon(p);
-		if (not A.second) continue;
-		auto B = S2.split_polygon(*A.second);
-		if (not B.first) continue;
+	auto galaxies = read_2mass("2mrs_1175_done.dat");
 
-		filtered_polygons.push_back(*B.first);
+	double step = argv.get<double>("rstep");
+	double dr = argv.get<double>("dr");
+	for (double r = 0.0; r + dr < L/2; r += step)
+	{
+		//std::string fn_output = timed_filename(argv["id"], Misc::format("slice-", r, "-", r+dr), t, "pdf");
+		std::string fn_output_png = timed_filename(argv["id"], Misc::format("slice-", r, "-", r+dr), t, "png");
+		Sphere S1(Point(L/2,L/2,L/2), r), S2(Point(L/2,L/2,L/2), r + dr);
+		std::cout << "filtering polygons ... radius " << r << "\n";
+		Array<Polygon> filtered_polygons;
+		Array<Vertex>  filtered_galaxies;
+		for (Polygon const &p : polygons)
+		{
+			auto d = p.get_info<double>("density");
+			if ((not d) or (*d < wall_lim)) continue;
+			auto A = S1.split_polygon(p);
+			if (not A.second) continue;
+			auto B = S2.split_polygon(*A.second);
+			if (not B.first) continue;
+
+			filtered_polygons.push_back(*B.first);
+		}
+
+		for (Vertex const &v : galaxies)
+		{
+			if ((not S1.is_below(v)) and S2.is_below(v))
+				filtered_galaxies.push_back(v);
+		}
+
+		Array<ptr<RenderObject>> scene;
+		scene.push_back(ptr<RenderObject>(new PolygonObject(
+			filtered_polygons, [] (Plane const &P, Context cx)
+		{
+			double s = P.normal() * Vector(0, 0, 1);
+			cx->set_source_rgba(1,s*s,s*s,0.6);
+			cx->fill_preserve();
+			cx->set_source_rgba(0,0,0,0.3);
+			cx->set_line_width(0.001);
+			cx->stroke();
+		})));
+
+		scene.push_back(ptr<RenderObject>(new VertexObject(
+			filtered_galaxies, [] (Plane const &P, Context cx)
+		{
+			cx->set_source_rgba(0,0,1,0.5);
+			cx->rel_move_to(-0.01,0);
+			cx->rel_line_to(0.01, -0.01);
+			cx->rel_line_to(0.01, 0.01);
+			cx->rel_line_to(-0.01, 0.01);
+			cx->rel_line_to(-0.01, -0.01);
+			//cx->set_line_width(0.01);
+			//cx->rel_line_to(0,0);
+			//cx->stroke();
+			cx->close_path();
+			cx->fill();
+		})));
+		
+		auto C = make_ptr<Map_projection_camera>(
+			Point(L/2,L/2,L/2), Point(L, L/2, L/2), Vector(0, 0, 1),
+			//Point(-1.0, 0.5, 1.0), centre, Vector(0, -1, 0),
+				Map_projection(Aitoff_Hammer));
+
+		double N = 1200;	
+		auto R = Renderer::Image(2*N, N);
+		R->apply([N] (Context cx)
+		{
+			double L = 3;
+			cx->scale(N/L,N/L);
+			cx->translate(L, L/2);
+			cx->set_source_rgb(0.5,0.5,0.5);
+
+			cx->save();
+			cx->scale(2*sqrt(2), sqrt(2));
+			cx->arc(0,0,1.0,0,6.283184);
+			cx->set_line_width(0.01);
+			cx->stroke();
+			cx->restore();
+
+			cx->set_line_join(Cairo::LINE_JOIN_ROUND);
+		});
+
+		R->render(scene, C);
+		R->write_to_png(fn_output_png);
+		R->finish();
 	}
-
-	Array<RenderObject> scene;
-	scene.push_back(RenderObject(filtered_polygons, [] (Plane const &P, Context cx)
-	{
-		double s = P.normal() * Vector(0, 0, 1);
-		cx->set_source_rgba(1,s*s,s*s,0.6);
-		cx->fill_preserve();
-		cx->set_source_rgb(0,0,0);
-		cx->set_line_width(0.001);
-		cx->stroke();
-	}));
-	
-	auto C = make_ptr<Map_projection_camera>(
-		Point(50,50,50), Point(100, 50, 50), Vector(0, 0, 1),
-		//Point(-1.0, 0.5, 1.0), centre, Vector(0, -1, 0),
-			Map_projection(Aitoff_Hammer));
-
-	std::cout << "rendering ... \n";
-	double N = 600;	
-	auto R = Renderer::Image(2*N, N);
-	R->apply([N] (Context cx)
-	{
-		double L = 3;
-		cx->scale(N/L,N/L);
-		cx->translate(L, L/2);
-		cx->set_source_rgb(0.5,0.5,0.5);
-
-		cx->save();
-		cx->scale(2*sqrt(2), sqrt(2));
-		cx->arc(0,0,1.0,0,6.283184);
-		cx->set_line_width(0.01);
-		cx->stroke();
-		cx->restore();
-
-		cx->set_line_join(Cairo::LINE_JOIN_ROUND);
-	});
-
-	R->render(scene, C);
-	R->write_to_png(fn_output);
-	R->finish();
 }
 
 #include "base/global.hh"

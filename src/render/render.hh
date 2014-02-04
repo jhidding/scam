@@ -57,13 +57,41 @@ namespace Scam
 
 	class RenderObject
 	{
+		public:
+			virtual Array<Drawable> operator()(ptr<Camera> C) const = 0;
+	};
+
+	class VertexObject: public RenderObject
+	{
+		Array<Vertex>	V;
+		Material	M;
+
+		public:
+			VertexObject(Array<Vertex> V_, Material const &M_):
+				V(V_), M(M_) {}
+
+			Array<Drawable> operator()(ptr<Camera> C) const
+			{
+				Array<Drawable> A;
+				for (Vertex const &v : V)
+				{
+					Point p = (*C)(v);
+					Path G(false); G.push_back(p);
+					A.push_back(Drawable(G, Plane(), M));
+				}
+				return A;
+			}
+	};
+
+	class PolygonObject: public RenderObject
+	{
 		Array<Polygon>	P;
 		Material	M;
 
 		public:
-			RenderObject() {}
+			PolygonObject() {}
 
-			RenderObject(Array<Polygon> P_, Material const &M_):
+			PolygonObject(Array<Polygon> P_, Material const &M_):
 				P(P_), M(M_)
 			{}
 
@@ -100,6 +128,11 @@ namespace Scam
 				return ptr<Renderer>(new Renderer(Cairo::SvgSurface::create(filename, width, height)));
 			}
 
+			static ptr<Renderer> PDF(double width, double height, std::string const &filename)
+			{
+				return ptr<Renderer>(new Renderer(Cairo::PdfSurface::create(filename, width, height)));
+			}
+
 			static ptr<Renderer> Image(double width, double height)
 			{
 				return ptr<Renderer>(new Renderer(Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, height)));
@@ -120,9 +153,9 @@ namespace Scam
 				f(m_context);
 			}
 
-			void render(Array<RenderObject> Scene, ptr<Camera> C)
+			void render(Array<ptr<RenderObject>> Scene, ptr<Camera> C)
 			{
-				auto drawables = flatmap([C] (RenderObject const &r) { return r(C); }, Scene);
+				auto drawables = flatmap([C] (ptr<RenderObject> r) { return (*r)(C); }, Scene);
 				sort(drawables);
 				std::cerr << "rendering " << drawables.size() << " polygons.\n";
 				for_each([this] (Drawable const &d) { return d(m_context); }, drawables);

@@ -9,7 +9,7 @@
 
 using namespace Scam;
 
-Scam::Array<Scam::Vertex> read_vertices(std::istream &fi, Scam::ptr<PLY::PLY> ply, PLY::Format format)
+Scam::Array<Scam::Vertex> ply_read_vertices(std::istream &fi, Scam::ptr<PLY::PLY> ply, PLY::Format format)
 {
 	Scam::Array<Scam::Vertex> result;
 	auto block = PLY::read_element(fi, (*ply)["vertex"], format);
@@ -26,7 +26,7 @@ Scam::Array<Scam::Vertex> read_vertices(std::istream &fi, Scam::ptr<PLY::PLY> pl
 	return result;
 }
 
-Scam::Array<Scam::Polygon> read_polygons(std::istream &fi, Scam::ptr<PLY::PLY> ply, Scam::Array<Scam::Vertex> vertices, PLY::Format format)
+Scam::Array<Scam::Polygon> ply_read_polygons(std::istream &fi, Scam::ptr<PLY::PLY> ply, Scam::Array<Scam::Vertex> vertices, PLY::Format format)
 {
 	Scam::Array<Scam::Polygon> result;
 	auto block = PLY::read_element(fi, (*ply)["face"], format);
@@ -50,9 +50,9 @@ Test::Unit _test_PLY_read(
 	std::ifstream fi("test/stanford_bunny.ply");
 	PLY::Format format = PLY::read_header(fi, ply);
 	ply->print_header(std::cout, PLY::BINARY);
-	auto v = read_vertices(fi, ply, format);
+	auto v = ply_read_vertices(fi, ply, format);
 	std::cout << "read " << v.size() << " vertices.\n";
-	auto polygons = read_polygons(fi, ply, v, format);
+	auto polygons = ply_read_polygons(fi, ply, v, format);
 	std::cout << "read " << polygons.size() << " polygons.\n";
 
 	double cx = 0, cy = 0, cz = 0;
