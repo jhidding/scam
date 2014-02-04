@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "../base/common.hh"
+#include "../base/info.hh"
 #include "point.hh"
 #include "vector.hh"
 #include "vertex.hh"
@@ -19,7 +20,7 @@ namespace Scam
 
 		Array<Vertex>			   m_vert;
 		Plane				   m_plane;
-		std::map<std::string, std::string> m_info;
+		Info				   m_info;
 		size_t				   m_hash;
 
 		size_t compute_hash() const;
@@ -54,29 +55,18 @@ namespace Scam
 				m_hash = compute_hash();
 			}
 
+			Info info() const { return m_info; }
+
 			template <typename T>
 			void set_info(std::string const &key, T const &value)
 			{
-				std::ostringstream ss;
-				ss << value;
-				m_info[key] = ss.str();
+				m_info.set(key, value);
 			}
 
 			template <typename T>
 			Maybe<T> get_info(std::string const &key) const
 			{
-				auto i = m_info.find(key);
-				if (i == m_info.end()) 
-				{
-					return Nothing;
-				}
-				else
-				{
-					T value;
-					std::istringstream ss(i->second);
-					ss >> value;
-					return Just(value);
-				}
+				return m_info.get<T>(key);
 			}
 
 			Array<Vertex> vertices() const
@@ -115,13 +105,27 @@ namespace Scam
 		friend std::hash<Segment>;
 
 		Vertex 					m_a, m_b;
-		std::map<std::string, std::string> 	m_info;
+		Info				   m_info;
 
 		public:
 			Segment(Vertex const &a_, Vertex const &b_):
 				m_a(std::min(a_, b_)),
 				m_b(std::max(a_, b_))
 			{}
+
+			Info info() const { return m_info; }
+
+			template <typename T>
+			void set_info(std::string const &key, T const &value)
+			{
+				m_info.set(key, value);
+			}
+
+			template <typename T>
+			Maybe<T> get_info(std::string const &key) const
+			{
+				return m_info.get<T>(key);
+			}
 
 			Vertex const &first() const
 			{ 

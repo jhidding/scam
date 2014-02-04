@@ -7,6 +7,7 @@
 #include "render/render.hh"
 #include "render/map_projection.hh"
 #include "two_mass.hh"
+#include "material/colour.hh"
 
 #include <ctime>
 #include <sstream>
@@ -189,10 +190,18 @@ void command_cosmic(int argc_, char **argv_)
 
 		Array<ptr<RenderObject>> scene;
 		scene.push_back(ptr<RenderObject>(new PolygonObject(
-			filtered_polygons, [] (Plane const &P, Context cx)
+			filtered_polygons, [] (Info info, Context cx)
 		{
-			double s = P.normal() * Vector(0, 0, 1);
-			cx->set_source_rgba(1,s*s,s*s,0.6);
+			auto s_ = info.get<double>("incidence");
+			auto d_ = info.get<double>("density");
+			double s, d;
+			if (s_) s = fabs(*s_);
+			if (d_) d = sqrt(*d_);
+
+			d = std::max(5., d); d = std::min(10., d);
+			d = (d - 5.) / 5.;
+			auto Z = Colour::HSVA(0.1667 + d/3, 0.5 + s/5 + d*0.3, 1.0 - d*0.5, 0.5 + d/2 - s/2);
+			cx->set_source_rgba(Z.r(), Z.g(), Z.b(), Z.a());
 			cx->fill_preserve();
 			cx->set_source_rgba(0,0,0,0.3);
 			cx->set_line_width(0.001);
@@ -200,9 +209,9 @@ void command_cosmic(int argc_, char **argv_)
 		})));
 
 		scene.push_back(ptr<RenderObject>(new VertexObject(
-			filtered_galaxies, [] (Plane const &P, Context cx)
+			filtered_galaxies, [] (Info info, Context cx)
 		{
-			cx->set_source_rgba(0,0,1,0.5);
+			cx->set_source_rgba(1,0,0,0.5);
 			cx->rel_move_to(-0.01,0);
 			cx->rel_line_to(0.01, -0.01);
 			cx->rel_line_to(0.01, 0.01);

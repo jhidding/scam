@@ -93,8 +93,9 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
 				Q1.push_back(*q);
 				Q2.push_back(*q);
 				std::swap(Q1, Q2);
-				below = not below;
 			}
+
+			below = not below;
 		}
 		else
 		{

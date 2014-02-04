@@ -11,12 +11,12 @@
 namespace Scam
 {
 	using Context = Cairo::RefPtr<Cairo::Context>;
-	using Material = std::function<void (Plane const &, Context)>;
+	using Material = std::function<void (Info, Context)>;
 
 	class Drawable
 	{
 		Path		G;
-		Plane		P;
+		Info            I;
 		Material	M;
 
 		double		z;
@@ -24,8 +24,8 @@ namespace Scam
 		public:
 			Drawable() {}
 
-			Drawable(Path const &G_, Plane const &P_, Material const &M_):
-				G(G_), P(P_), M(M_)
+			Drawable(Path const &G_, Info I_, Material const &M_):
+				G(G_), I(I_), M(M_)
 			{
 				auto z_values = lazy_map(G, [] (Point const &x) { return x.z(); });
 				z = *std::max_element(z_values.begin(), z_values.end());
@@ -44,7 +44,7 @@ namespace Scam
 				if (G.closed())
 					cx->close_path();
 
-				M(P, cx);
+				M(I, cx);
 
 				cx->restore();
 			}
@@ -77,7 +77,7 @@ namespace Scam
 				{
 					Point p = (*C)(v);
 					Path G(false); G.push_back(p);
-					A.push_back(Drawable(G, Plane(), M));
+					A.push_back(Drawable(G, v.info(), M));
 				}
 				return A;
 			}
@@ -103,8 +103,11 @@ namespace Scam
 				for (Polygon const &p : P)
 				{
 					Array<Path> A = (*C)(p);
+					Info I = p.info();
+					Plane Q = (*C)(p.plane());
+					I.set("incidence", Q.normal() * Vector(0,0,1));
 					for (Path const g : A)
-						D.push_back(Drawable(g, (*C)(p.plane()), M));
+						D.push_back(Drawable(g, I, M));
 				}
 				return D;
 			}
