@@ -16,16 +16,38 @@ using namespace System;
 using namespace Scam;
 
 #include <gtkmm.h>
+#include <gtkmm/button.h>
+#include <gtkmm/window.h>
+#include <gtksourceviewmm/view.h>
+#include <gtksourceviewmm/buffer.h>
 
 namespace GUI
 {
+	class HelloWorld: public Gtk::Window
+	{
+		public:
+			HelloWorld();
+			virtual ~HelloWorld();
+
+		protected:
+			Gsv::View m_view;
+	};
+
+	HelloWorld::HelloWorld():
+		m_view(Gsv::Buffer::create())
+	{
+		add(m_view);
+		m_view.show();
+	}
+
+	HelloWorld::~HelloWorld() {}
+
 	void command_gui(int argc, char **argv)
 	{	
 		Gtk::Main kit(argc, argv);
 
-		Gtk::Window window;
-
-		Gtk::Main::run(window);
+		HelloWorld helloworld;
+		Gtk::Main::run(helloworld);
 	}
 }
 

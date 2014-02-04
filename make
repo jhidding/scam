@@ -21,8 +21,14 @@ objdir="obj"
 CAIRO_LDFLAGS=$(pkg-config --libs cairomm-1.0)
 CAIRO_CFLAGS=$(pkg-config --cflags cairomm-1.0)
 
-LDFLAGS="-lm -lrt -lfftw3 -lgsl -lgslcblas -lCGAL -lgmp -lboost_thread -lmpfr -fopenmp ${CAIRO_LDFLAGS}"
-CFLAGS="-g -std=c++0x -O2 -frounding-math -fopenmp -I/mnt/Prei/local/include ${CAIRO_CFLAGS}"
+GTK_LDFLAGS=$(pkg-config --libs gtkmm-3.0)
+GTK_CFLAGS=$(pkg-config --cflags gtkmm-3.0)
+
+GSV_LDFLAGS=$(pkg-config --libs gtksourceviewmm-3.0)
+GSV_CFLAGS=$(pkg-config --cflags gtksourceviewmm-3.0)
+
+LDFLAGS="-lm -lrt -lfftw3 -lgsl -lgslcblas -lCGAL -lgmp -lboost_thread -lmpfr -fopenmp ${CAIRO_LDFLAGS} ${GTK_LDFLAGS} ${GSV_LDFLAGS}"
+CFLAGS="-g -std=c++0x -O2 -frounding-math -fopenmp -I/mnt/Prei/local/include ${CAIRO_CFLAGS} ${GTK_CFLAGS} ${GSV_CFLAGS}"
 
 CC="g++"
 ext=".cc"
