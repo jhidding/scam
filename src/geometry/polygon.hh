@@ -30,8 +30,8 @@ namespace Scam
 
 			Polygon() {}
 
-			Polygon(Array<Vertex> V):
-				m_vert(V)
+			Polygon(Array<Vertex> V, Info info_ = Info()):
+				m_vert(V), m_info(info_)
 			{
 				m_hash = compute_hash();
 				m_plane = Plane((*V)[1], Vector::cross(
@@ -104,13 +104,16 @@ namespace Scam
 	{
 		friend std::hash<Segment>;
 
-		Vertex 					m_a, m_b;
-		Info				   m_info;
+		Vertex 				m_a, m_b;
+		Info				m_info;
 
 		public:
-			Segment(Vertex const &a_, Vertex const &b_):
+			Segment() {}
+
+			Segment(Vertex const &a_, Vertex const &b_, Info info_ = Info()):
 				m_a(std::min(a_, b_)),
-				m_b(std::max(a_, b_))
+				m_b(std::max(a_, b_)),
+				m_info(info_)
 			{}
 
 			Info info() const { return m_info; }

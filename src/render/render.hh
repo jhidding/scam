@@ -83,6 +83,29 @@ namespace Scam
 			}
 	};
 
+	class SegmentObject: public RenderObject
+	{
+		Array<Segment>	S;
+		Material	M;
+
+		public:
+			SegmentObject() {}
+			SegmentObject(Array<Segment> S_, Material const &M_):
+				S(S_), M(M_) {}
+
+			Array<Drawable> operator()(ptr<Camera> C) const
+			{
+				Array<Drawable> A;
+				for (Segment const &s : S)
+				{
+					auto B = (*C)(s);
+					for (Path const &G : B)
+						A.push_back(Drawable(G, s.info(), M));
+				}
+				return A;
+			}
+	};
+
 	class PolygonObject: public RenderObject
 	{
 		Array<Polygon>	P;

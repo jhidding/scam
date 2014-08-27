@@ -89,6 +89,16 @@ namespace Scam
 				Array<Path> B; B.push_back(A);
 				return B;
 			}
+
+			virtual Array<Path> operator()(Segment const &Q) const
+			{
+				Path A(true);
+				A.push_back(P(R(T(Q.first()))));
+				A.push_back(P(R(T(Q.second()))));
+
+				Array<Path> B; B.push_back(A);
+				return B;
+			}
 	};
 
 	inline Point parallel_projection(Vector const &v)

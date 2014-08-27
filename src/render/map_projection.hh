@@ -155,5 +155,37 @@ namespace Scam
 
 				return A;
 			}
+
+			Array<Path> operator()(Segment const &S) const
+			{
+				Array<Path> A;
+				auto Q = m_split(S);
+
+				if (std::get<0>(Q))
+				{
+					Path p(false);
+					p.push_back(m_project.right(rotate(translate(std::get<0>(Q)->first()))));
+					p.push_back(m_project.right(rotate(translate(std::get<0>(Q)->second()))));
+					A.push_back(p);
+				}
+
+				if (std::get<1>(Q))
+				{
+					Path p(false);
+					p.push_back(m_project.middle(rotate(translate(std::get<1>(Q)->first()))));
+					p.push_back(m_project.middle(rotate(translate(std::get<1>(Q)->second()))));
+					A.push_back(p);
+				}
+
+				if (std::get<2>(Q))
+				{
+					Path p(false);
+					p.push_back(m_project.left(rotate(translate(std::get<2>(Q)->first()))));
+					p.push_back(m_project.left(rotate(translate(std::get<2>(Q)->second()))));
+					A.push_back(p);
+				}
+
+				return A;
+			}
 	};
 }

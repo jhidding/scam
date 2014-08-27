@@ -65,6 +65,7 @@ template <typename F1, typename F2>
 std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
 	F1 splitter, F2 is_below, Polygon const &P, bool closed = true)
 {
+	Info I = P.info();
 	using return_type = std::pair<Maybe<Polygon>,Maybe<Polygon>>;
 
 	if (P.empty()) return return_type(Nothing, Nothing);
@@ -113,9 +114,9 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> _split_polygon(
 	}
 
 	if (below)
-		return return_type(Just(Polygon(Q1)), Just(Polygon(Q2)));
+		return return_type(Just(Polygon(Q1, I)), Just(Polygon(Q2, I)));
 	else
-		return return_type(Just(Polygon(Q2)), Just(Polygon(Q1)));
+		return return_type(Just(Polygon(Q2, I)), Just(Polygon(Q1, I)));
 }
 
 
@@ -167,6 +168,7 @@ std::pair<Maybe<Polygon>, Maybe<Polygon>> Surface::split_polygon(
 std::pair<Maybe<Segment>, Maybe<Segment>> 
 Surface::split_segment(Segment const &s) const
 {
+	Info I = s.info();
 	using return_type = 
 		std::pair<Maybe<Segment>, Maybe<Segment>>;
 
@@ -183,8 +185,12 @@ Surface::split_segment(Segment const &s) const
 		return return_type(Just(s), Nothing);
 
 	Vertex v(*p);
-	return return_type(
-		Just(Segment(s.first(), v)),
-		Just(Segment(v, s.second())));
+	if (a) return return_type(
+		Just(Segment(s.first(), v, I)),
+		Just(Segment(v, s.second(), I)));
+	else return return_type(
+		Just(Segment(s.second(), v, I)),
+		Just(Segment(v, s.first(), I)));
+
 }
 

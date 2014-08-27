@@ -67,16 +67,18 @@ Test::Unit _test_PLY_read(
 		mar = std::max((p - centre).sqr(), mar);
 	mar = sqrt(mar);
 
-	Array<RenderObject> scene;
-	scene.push_back(RenderObject(polygons, [] (Plane const &P, Context cx)
+	Array<ptr<RenderObject>> scene;
+	scene.push_back(ptr<RenderObject>(new PolygonObject(
+		polygons, [] (Info I, Context cx)
 	{
-		double s = P.normal() * Vector(0, 0, 1);
+		auto s_ = I.get<double>("incidence");
+		double s = 0.0; if (s_) s = *s_;
 		cx->set_source_rgba(1,s*s,s*s,0.6);
 		cx->fill_preserve();
 		cx->set_source_rgb(0,0,0);
 		cx->set_line_width(0.001);
 		cx->stroke();
-	}));
+	})));
 	
 	auto C = make_ptr<Map_projection_camera>(
 		centre, centre + Vector(-1, 0, 1), Vector(0, -1, 0),

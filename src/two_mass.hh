@@ -1,6 +1,29 @@
 #pragma once
+#include <iostream>
+#include <fstream>
 #include "base/common.hh"
 #include "geometry/vector.hh"
+#include "geometry/point.hh"
+#include "geometry/vertex.hh"
+
+namespace Abell
+{
+	struct Cluster
+	{
+		std::string 	A_ID;
+		double  	ra_b1950_h, ra_b1950_m, dec_b1950_d, dec_b1950_m;
+		std::string 	BM_TYPE;
+		int		count;
+		double		l, b, z;
+		int		rich, dclass;
+		double		m10;
+		double		ra_h, ra_m, ra_s, dec_d, dec_m, dec_s;
+		double		ox, oy;
+		std::string	name;
+	};
+
+	extern std::istream &operator>>(std::istream &in, Cluster &C);
+}
 
 namespace TwoMass
 {
@@ -54,5 +77,24 @@ namespace TwoMass
 		ga_to_sg, sg_to_ga, 
 		eq_to_sg, sg_to_eq;
 
+	inline Scam::Array<Scam::Vertex> read_2mass(std::string const &fn, 
+		Spherical_rotation const &sph = ga_to_sg, bool offset = true)
+	{
+		std::cerr << "Reading 2MASS redshift survey data ... ";
+		Scam::Array<Scam::Vertex> A;
+		std::ifstream fi(fn);
+		while (!fi.eof())
+		{
+			Galaxy G; fi >> G;
+			double sg_ra, sg_dec;
+			sph(radians(G.l), radians(G.b), sg_ra, sg_dec);
+			auto x = spherical_to_cartesian(sg_ra, sg_dec, G.v / 100.);
+			Scam::Vertex v((offset ? Scam::Point(90,90,90) + x : Scam::Point(0,0,0) + x));
+			v.set_info("magnitude", G.k_tc);
+			A.push_back(v);
+		}
+		std::cerr << "Ok\n";
+		return A;
+	}
 }
 

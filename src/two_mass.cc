@@ -5,6 +5,27 @@
 
 using namespace Scam;
 using namespace TwoMass;
+using namespace Abell;
+
+std::istream &Abell::operator>>(std::istream &in, Cluster &C)
+{
+	std::string line;
+	do {
+		std::getline(in, line);
+	} while (line[0] == '#');
+
+	std::istringstream ss(line);
+	ss >> C.A_ID    >> C.ra_b1950_h >> C.ra_b1950_m >> C.dec_b1950_d >> C.dec_b1950_m
+	   >> C.BM_TYPE >> C.count      >> C.l          >> C.b           >> C.z
+	   >> C.rich    >> C.dclass     >> C.m10
+	   >> C.ra_h    >> C.ra_m       >> C.ra_s
+	   >> C.dec_d   >> C.dec_m      >> C.ra_s
+	   >> C.ox	>> C.oy 	>> C.name;
+
+	std::cerr << C.A_ID << " " << C.ra_h << " " << C.dec_d << " " << C.name << std::endl;
+
+	return in;
+}
 
 std::istream &TwoMass::operator>>(std::istream &in, Galaxy &G)
 {

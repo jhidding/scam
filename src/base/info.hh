@@ -29,7 +29,15 @@ namespace Scam
 				if (i == m_info->end()) return Nothing;
 				std::istringstream ss(i->second);
 				T value; ss >> value;
-				return value;
+				return Just(value);
+			}
+
+			Maybe<std::string> get_str(std::string const &key) const
+			{
+				if (not m_info) return Nothing;
+				auto i = m_info->find(key);
+				if (i == m_info->end()) return Nothing;
+				return Just(i->second);
 			}
 	};
 }

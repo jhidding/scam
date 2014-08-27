@@ -26,16 +26,18 @@ Test::Unit _test_SVG(
 		polygons.push_back(Polygon(V));
 	}
 
-	Array<RenderObject> scene;
-	scene.push_back(RenderObject(polygons, [] (Plane const &P, Context cx)
+	Array<ptr<RenderObject>> scene;
+	scene.push_back(ptr<RenderObject>(new PolygonObject(
+		polygons, [] (Info I, Context cx)
 	{
-		double s = P.normal() * Vector(0, 0, 1);
+		auto s_ = I.get<double>("incidence");
+		double s = 0.0; if (s_) s = *s_;
 		cx->set_source_rgba(1,0,0,1.0-fabs(s));
 		cx->fill_preserve();
 		cx->set_source_rgb(0,0,0);
 		cx->set_line_width(0.01);
 		cx->stroke();
-	}));
+	})));
 
 	auto C = make_ptr<Camera>(
 		Point(3, 2, 1), Point(0.5,0.5,0.5), Vector(0, 0, -1),
