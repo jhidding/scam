@@ -28,7 +28,7 @@ namespace Scam
 			static Quat_ rotation(Vector_<T> const &u, T theta)
 			{
 				Vector v = u.scale(sin(theta/2));
-				double w = sqrt(1 - v.sqr());
+				double w = cos(theta/2); //sqrt(1 - v.sqr());
 				return Quat_(w, v); 
 
 				// apparently cos and sin have such round-off error that
