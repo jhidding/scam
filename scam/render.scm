@@ -109,7 +109,7 @@
 	(let ((set-colour (comp ($ cairo-set-source-rgba ctx) colour-rgba))
 	      (set-line-width   ($ cairo-set-line-width ctx))
 	      (fill             ($ cairo-fill-preserve ctx))
-	      (stroke           ($ cairo-stroke ctx)))
+	      (stroke           ($ cairo-stroke-preserve ctx)))
 	  (f z normal set-colour set-line-width fill stroke))))))
 
   ;;; ==================================================================
@@ -136,7 +136,8 @@
 				    
 				    (if (null? points) 
 				      (begin (display "# weird error!\n") (p 0 '() id))
-				      (p (apply max (map car points)) (map cdr points) #t material))))
+				        (p (list-sort > (map car points)) (map cdr points) #t material))))
+				      ;(p (apply max (map car points)) (map cdr points) #t material))))
 
 		    ((segment? P) (let* (
 					 ;(points (map (comp (lambda (x y z) (list z x y)) C)
@@ -151,7 +152,7 @@
 					 (material ((segment-material P) (caar points) normal)))
 				    (if (null? points)
 				      (begin (display "# weird error!\n") (p 0 '() id))
-				      (p (- (apply max (map car points)) 0.01) (map cdr points) #f material)))))))))
+				      (p (- (apply min (map car points)) 0.01) (map cdr points) #f material)))))))))
 
   (define get-z (lambda (d) (render-data-z d)))
 
@@ -171,6 +172,14 @@
 	(if close? (cairo-close-path ctx)) (mat ctx) (cairo-new-path ctx)
 	(cairo-restore ctx))))))
 
+  (define first>
+    (lambda (a b)
+      (cond
+        ((null? a) #t)
+        ((equal? (car a) (car b)) (first> (cdr a) (cdr b)))
+        ((> (car a) (car b)) #t)
+        (else #f))))
+
   ;;; ==================================================================
   ;;; render-scene,
   ;;; function that renders the scene, sorted on z-value
@@ -181,7 +190,7 @@
       (let* ((camera (renderer-camera R))
 	     (data   (begin (display "preparing render data ... ")
 			    (map ($ make-render-data camera) S)))
-	     (sorted (list-sort (on > get-z) data)))
+	     (sorted (list-sort (on first> get-z) data)))
 	(display "rendering ... ")
 	(for-each ($ render-item R) sorted)
 	(display "done") (newline))))

@@ -11,7 +11,7 @@
   (export 
     make-colour colour? colour-red colour-green colour-blue 
     colour-hue colour-saturation colour-value colour-alpha
-    colour-rgba
+    colour-add colour-rgba colour-desaturise
     colour-hsv-gradient
     colour-dim colour-rgb-gradient)
 
@@ -59,6 +59,24 @@
 	    ((eq? space 'hsva) (let ((u (take 3 v))
 				     (a (list-ref v 3)))
 				 (apply p (append (apply hsv->rgb u) u (list a))))))))))
+
+  (define colour-desaturise
+    (lambda (c v)
+      (let ((cup (lambda (m) (lambda (n) (if (< n m) m n)))))
+        (make-colour 'hsva
+          (colour-hue c)
+	  ((cup 0.0) (- (colour-saturation c) v))
+	  (colour-value c)
+	  (colour-alpha c)))))
+
+  (define colour-add
+    (lambda (a b)
+      (let ((cap (lambda (m) (lambda (n) (if (> n m) m n)))))
+        (make-colour 'rgba
+	  ((cap 1.) (+ (colour-red   a) (colour-red   b)))
+	  ((cap 1.) (+ (colour-green a) (colour-green b)))
+	  ((cap 1.) (+ (colour-blue  a) (colour-blue  b)))
+	  ((cap 1.) (+ (colour-alpha a) (colour-alpha b)))))))
 
   (define colour-rgb-gradient
     (let ((interp (lambda (a b x) (+ a (* x (- b a))))))

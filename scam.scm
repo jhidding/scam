@@ -27,7 +27,7 @@
     :. :> a-dot a-add a-translate a-scale
     
     ; polygons
-    make-plane segment-add-material
+    make-plane segment-add-material point->vertex
     make-polygon polygon-add-material polygons-boundary
     
     ; parametric
@@ -48,7 +48,7 @@
     camera-transform parallel-projection weak-perspective-projection
     
     ; colour
-    make-colour colour-rgb-gradient colour-hsv-gradient)
+    make-colour colour-rgb-gradient colour-hsv-gradient colour-add colour-desaturise)
 
   (import (rnrs (6))
     	  (scam lib)
