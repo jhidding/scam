@@ -8,8 +8,8 @@
    | linear interpolation in either 'rgb or 'hsv space.
    +------------------------------------------------------------------|#
 
-  (export 
-    make-colour colour? colour-red colour-green colour-blue 
+  (export
+    make-colour colour? colour-red colour-green colour-blue
     colour-hue colour-saturation colour-value colour-alpha
     colour-add colour-rgba colour-desaturise
     colour-hsv-gradient
@@ -26,11 +26,11 @@
   	     (p   (* v (- 1 s)))
   	     (q   (* v (- 1 (* g s)))))
 
-        (list-permute 
+        (list-permute
           (list v q p)
           (list-ref '((0 1 2) (1 0 2) (2 0 1)
   		      (2 1 0) (1 2 0) (0 2 1)) H-i)))))
-  
+
   (define rgb->hsv
     (lambda (r g b)
       (let* ((max-rgb    (max r g b))
