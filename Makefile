@@ -20,9 +20,6 @@ test_obj_files = $(cc_files:%.cc=$(build_dir_test)/%.o)
 dep_files = $(obj_files:%.o=%.d)
 test_dep_files = $(test_obj_files:%.o=%.d)
 
--include $(dep_files)
--include $(test_dep_files)
-
 .PHONY: all clean test
 
 all: $(target)
@@ -30,6 +27,9 @@ all: $(target)
 test: $(target_test)
 	cp test/stanford_bunny.ply build
 	cd build && ./cscam.test test
+
+-include $(dep_files)
+-include $(test_dep_files)
 
 $(build_dir_test)/%.o: %.cc
 	@mkdir -p $(@D)
