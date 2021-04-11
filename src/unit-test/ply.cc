@@ -47,7 +47,7 @@ Test::Unit _test_PLY_read(
 {
 	auto ply = make_ptr<PLY::PLY>();
 
-	std::ifstream fi("test/stanford_bunny.ply");
+	std::ifstream fi("stanford_bunny.ply");
 	PLY::Format format = PLY::read_header(fi, ply);
 	ply->print_header(std::cout, PLY::BINARY);
 	auto v = ply_read_vertices(fi, ply, format);
