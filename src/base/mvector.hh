@@ -10,6 +10,7 @@
 #include <numeric>
 #include <initializer_list>
 #include <array>
+#include <cmath>
 
 #include <iostream>
 #include <iterator>

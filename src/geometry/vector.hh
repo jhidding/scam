@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <numeric>
 #include <iostream>
+#include <cmath>
 
 namespace Scam
 {

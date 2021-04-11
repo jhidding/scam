@@ -6,6 +6,7 @@ using namespace Scam;
 #ifdef UNITTEST
 #include "../base/unittest.hh"
 #include "../geometry/geometry.hh"
+#include <cassert>
 
 Test::Unit _test_TeX(
 	"TEX00", "Testing capability of rendering LaTeX.",
@@ -59,6 +60,7 @@ Test::Unit _test_TeX(
 	R->render(scene, C);
 
 	auto eqn = A.svg();
+        assert(eqn->ok());
 	R->apply([eqn] (Context cx)
 	{
 		double w = eqn->width(), h = eqn->height();
@@ -85,7 +87,7 @@ Test::Unit _test_TeX(
 Scam::SvgFile::SvgFile(std::string const &fn):
 	m_ok(false)
 {
-	GError *err;
+	GError *err = NULL;
 	m_handle = rsvg_handle_new_from_file(fn.c_str(), &err);
 	if (m_handle != NULL)
 	{
@@ -98,7 +100,7 @@ bool Scam::SvgFile::ok() const { return m_ok; }
 
 Scam::SvgFile::~SvgFile()
 {
-	GError *err;
+	GError *err = NULL;
 	rsvg_handle_close(m_handle, &err);
 	g_object_unref(m_handle);
 }

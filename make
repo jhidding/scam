@@ -23,7 +23,7 @@ CAIRO_CFLAGS=$(pkg-config --cflags cairomm-1.0)
 RSVG_CFLAGS=$(pkg-config --cflags librsvg-2.0)
 RSVG_LDFLAGS=$(pkg-config --libs librsvg-2.0)
 
-LDFLAGS="-lm -lrt -lfftw3 -lgsl -lgslcblas -lCGAL -lgmp -lboost_thread -lmpfr -fopenmp ${CAIRO_LDFLAGS} ${RSVG_LDFLAGS}"
+LDFLAGS="-lm -lrt -lfftw3 -lgsl -lgslcblas -lgmp -lboost_thread -lmpfr -fopenmp ${CAIRO_LDFLAGS} ${RSVG_LDFLAGS}"
 CFLAGS="-g -std=c++0x -O2 -frounding-math -fopenmp -I/mnt/Prei/local/include ${CAIRO_CFLAGS} ${RSVG_CFLAGS}"
 
 CC="g++"
