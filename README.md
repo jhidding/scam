@@ -18,6 +18,10 @@ or similar. Let's go through a small example.
 Cube tutorial
 -------------
 
+The code in this tutorial generates this nice image of an exploding cube:
+
+![Exploding cube](examples/exploding-cube.svg)
+
 Scam is a R6RS library. A program starts with the following imports.
 
 ``` {.scheme file=examples/exploding-cube.scm #exploding-cube}
@@ -136,8 +140,4 @@ Final rendering is done to an SVG surface.
   (render-scene s (map ($ polygon-add-material -- (make-material-linefill-fn material-fn)) faces))
   (render-finish s))
 ```
-
-Resulting in the following image:
-
-![Exploding cube](examples/exploding-cube.svg)
 
