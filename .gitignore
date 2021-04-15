@@ -1,2 +1,5 @@
 build
+.entangled
+test/*.svg
+test/*.pdf
 

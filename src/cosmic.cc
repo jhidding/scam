@@ -349,8 +349,8 @@ void command_cosmic(int argc_, char **argv_)
 	double wall_lim = argv.get<double>("wall-lim");
 	double fila_lim = argv.get<double>("fila-lim");
 
-	std::string fn_i_wall = Misc::format(argv["id"], ".", time_string(t), ".walls.ply");
-	std::string fn_i_fila = Misc::format(argv["id"], ".", time_string(t), ".filam.ply");
+	std::string fn_i_wall = Misc::format(argv["id"], ".walls.", time_string(t), ".ply");
+	std::string fn_i_fila = Misc::format(argv["id"], ".filam.", time_string(t), ".ply");
 
 	std::cerr << "Reading " << fn_i_wall << " ..." << std::endl;
 	auto ply = make_ptr<PLY::PLY>();
